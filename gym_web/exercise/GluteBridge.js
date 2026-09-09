@@ -12,7 +12,7 @@ export class GluteBridgeExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedUp = false; this.lastCountTime = 0;
+    this.reachedUp = false; this.hadFeetPlacementThisRep = false; this.feetReason = null; this.lastCountTime = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_hip")+visibility(lm,"left_knee")+visibility(lm,"left_ankle"))/4;
@@ -37,13 +37,27 @@ export class GluteBridgeExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.knee > 125) errors.push({ message: "Bring feet closer", speech: "Walk your feet closer to your glutes." });
-    else if (a.knee < 65) errors.push({ message: "Move feet forward", speech: "Move your feet slightly further away from your glutes." });
+    if (this.prevState === "down" && this.currentState !== "down") {
+      this.hadFeetPlacementThisRep = false; this.feetReason = null;
+    }
+    if (a.knee > 125) {
+      this.hadFeetPlacementThisRep = true;
+      this.feetReason = { message: "Bring feet closer", speech: "Walk your feet closer to your glutes." };
+      errors.push(this.feetReason);
+    } else if (a.knee < 65) {
+      this.hadFeetPlacementThisRep = true;
+      this.feetReason = { message: "Move feet forward", speech: "Move your feet slightly further away from your glutes." };
+      errors.push(this.feetReason);
+    }
     if (a.hip > 115 && a.hip < 145 && this.prevState === "mid")
       errors.push({ message: "Squeeze glutes higher", speech: "Squeeze your glutes and drive your hips all the way up." });
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadFeetPlacementThisRep; const reason = this.feetReason;
+    this.hadFeetPlacementThisRep = false; this.feetReason = null;
+    return had ? reason : null;
+  }
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.hip <= 105 && a.knee >= 70 && a.knee <= 120;

@@ -12,7 +12,7 @@ export class SideLungeExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedDown = false; this.lastCountTime = 0;
+    this.reachedDown = false; this.hadTrailBentThisRep = false; this.hadNarrowStanceThisRep = false; this.lastCountTime = 0;
   }
   computeAngles(lm, w, h) {
     const leftKnee = computeAngle(lm, "left_hip", "left_knee", "left_ankle", w, h);
@@ -37,15 +37,28 @@ export class SideLungeExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.workingKnee < 125 && a.straightKnee < 155)
+    if (this.prevState === "up" && this.currentState !== "up") {
+      this.hadTrailBentThisRep = false; this.hadNarrowStanceThisRep = false;
+    }
+    if (a.workingKnee < 125 && a.straightKnee < 155) {
+      this.hadTrailBentThisRep = true;
       errors.push({ message: "Keep one leg straight", speech: "Keep your non-lunging leg completely straight as you sit back." });
+    }
     if (a.workingKnee > 100 && a.workingKnee <= 125 && this.prevState === "mid")
       errors.push({ message: "Lunge deeper", speech: "Sink lower until your thigh is parallel to the floor." });
-    if (a.workingKnee < 140 && a.stanceRatio < 1.3)
+    if (a.workingKnee < 140 && a.stanceRatio < 1.3) {
+      this.hadNarrowStanceThisRep = true;
       errors.push({ message: "Widen your stance", speech: "Take a wider step out to the side before lunging." });
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const trailBent = this.hadTrailBentThisRep, narrow = this.hadNarrowStanceThisRep;
+    this.hadTrailBentThisRep = false; this.hadNarrowStanceThisRep = false;
+    if (trailBent) return { message: "Keep one leg straight", speech: "Keep your non-lunging leg completely straight as you sit back." };
+    if (narrow) return { message: "Widen your stance", speech: "Take a wider step out to the side before lunging." };
+    return null;
+  }
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.leftKnee >= 155 && a.rightKnee >= 155;

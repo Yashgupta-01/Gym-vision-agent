@@ -12,7 +12,7 @@ export class CalfRaiseExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.baselineHeelLift = 0; this.reachedUpPhase = false; this.lastCountTime = 0;
+    this.baselineHeelLift = 0; this.reachedUpPhase = false; this.hadBentKneeThisRep = false; this.lastCountTime = 0;
     this.isCalibrated = false;
   }
   _activeSide(lm) {
@@ -42,10 +42,17 @@ export class CalfRaiseExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.kneeAngle < 155) errors.push({ message: "Keep knees straight", speech: "Keep your legs straight and drive up through your toes." });
+    if (this.prevState === "down" && this.currentState !== "down") this.hadBentKneeThisRep = false;
+    if (a.kneeAngle < 155) {
+      this.hadBentKneeThisRep = true;
+      errors.push({ message: "Keep knees straight", speech: "Keep your legs straight and drive up through your toes." });
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadBentKneeThisRep; this.hadBentKneeThisRep = false;
+    return had ? { message: "Keep knees straight", speech: "Keep your legs straight and drive up through your toes." } : null;
+  }
   checkStartPosture(lm, w, h) { return this.computeAngles(lm, w, h).heelLift < 0.10; }
   getCalibrationChecks() {
     return [

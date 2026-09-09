@@ -12,7 +12,7 @@ export class LungeExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedDown = false; this.lastCountTime = 0;
+    this.reachedDown = false; this.hadKneeOverToeThisRep = false; this.lastCountTime = 0;
   }
   computeAngles(lm, w, h) {
     return {
@@ -32,15 +32,21 @@ export class LungeExercise {
   }
   checkFormErrors(a, lm, w, h) {
     const errors = [];
+    if (this.prevState === "up" && this.currentState !== "up") this.hadKneeOverToeThisRep = false;
     if (!lm) return errors;
     const lk = px(lm, "left_knee", w, h), la = px(lm, "left_ankle", w, h);
     const ls = px(lm, "left_shoulder", w, h), rs = px(lm, "right_shoulder", w, h);
     const shoulderWidth = Math.abs(ls[0] - rs[0]) + 1e-6;
-    if (Math.abs(lk[0] - la[0]) / shoulderWidth > 0.35)
+    if (Math.abs(lk[0] - la[0]) / shoulderWidth > 0.35) {
+      this.hadKneeOverToeThisRep = true;
       errors.push({ message: "Knee over toe", speech: "Keep your front knee aligned over your ankle." });
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadKneeOverToeThisRep; this.hadKneeOverToeThisRep = false;
+    return had ? { message: "Knee over toe", speech: "Keep your front knee aligned over your ankle." } : null;
+  }
   checkStartPosture(lm, w, h) {
     return computeAngle(lm, "left_hip", "left_knee", "left_ankle", w, h) > 155;
   }

@@ -1,4 +1,3 @@
-
 import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
 export class PushUpExercise {
@@ -13,7 +12,7 @@ export class PushUpExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedDown = false; this.lastCountTime = 0;
+    this.reachedDown = false; this.hadHipDevThisRep = false; this.hipDevReason = null; this.lastCountTime = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm, "left_shoulder") + visibility(lm, "left_elbow") + visibility(lm, "left_hip") + visibility(lm, "left_ankle")) / 4;
@@ -43,25 +42,35 @@ export class PushUpExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.normHipDev < -0.15) errors.push({ message: "Hips too high", speech: "Lower your hips. Keep your body in a straight plank line." });
-    else if (a.normHipDev > 0.15) errors.push({ message: "Hips sagging", speech: "Engage your core. Don't let your hips drop." });
+    if (this.prevState === "up" && this.currentState !== "up") {
+      this.hadHipDevThisRep = false; this.hipDevReason = null;
+    }
+    if (a.normHipDev < -0.15) {
+      this.hadHipDevThisRep = true;
+      this.hipDevReason = { message: "Hips too high", speech: "Lower your hips. Keep your body in a straight plank line." };
+      errors.push(this.hipDevReason);
+    } else if (a.normHipDev > 0.15) {
+      this.hadHipDevThisRep = true;
+      this.hipDevReason = { message: "Hips sagging", speech: "Engage your core. Don't let your hips drop." };
+      errors.push(this.hipDevReason);
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadHipDevThisRep; const reason = this.hipDevReason;
+    this.hadHipDevThisRep = false; this.hipDevReason = null;
+    return had ? reason : null;
+  }
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.elbow >= 150 && Math.abs(a.normHipDev) <= 0.15;
   }
   getCalibrationChecks() {
     return [
-      {
-        id: "full_body_visible_side", message: "Set up in side view so shoulders, hips, and ankles are visible.",
-        check: (lm) => maxVis(lm, "shoulder") > 0.5 && maxVis(lm, "hip") > 0.5 && maxVis(lm, "ankle") > 0.5
-      },
-      {
-        id: "plank_straight", message: "Get into a plank — straight line from shoulders to ankles.",
-        check: (lm, w, h) => this.checkStartPosture(lm, w, h)
-      },
+      { id: "full_body_visible_side", message: "Set up in side view so shoulders, hips, and ankles are visible.",
+        check: (lm) => maxVis(lm, "shoulder") > 0.5 && maxVis(lm, "hip") > 0.5 && maxVis(lm, "ankle") > 0.5 },
+      { id: "plank_straight", message: "Get into a plank — straight line from shoulders to ankles.",
+        check: (lm, w, h) => this.checkStartPosture(lm, w, h) },
     ];
   }
 }

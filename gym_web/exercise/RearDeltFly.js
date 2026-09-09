@@ -1,10 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-//  REAR DELT FLY
-//  Reuses BentOverRow's two angles (arm-raise + hip-hinge stability),
-//  but the arm moves out to the SIDE here instead of pulling straight
-//  back to the torso. See the reliability flag at the top of this file.
-// ─────────────────────────────────────────────────────────────
-
 import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
 export class RearDeltFlyExercise {
@@ -19,7 +12,7 @@ export class RearDeltFlyExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedUp = false; this.lastCountTime = 0;
+    this.reachedUp = false; this.hadTorsoRiseThisRep = false; this.lastCountTime = 0;
     this.baselineHipAngle = null;
   }
   _activeSide(lm) {
@@ -45,11 +38,17 @@ export class RearDeltFlyExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (this.baselineHipAngle !== null && (a.hipHinge - this.baselineHipAngle) > 20)
+    if (this.prevState === "down" && this.currentState !== "down") this.hadTorsoRiseThisRep = false;
+    if (this.baselineHipAngle !== null && (a.hipHinge - this.baselineHipAngle) > 20) {
+      this.hadTorsoRiseThisRep = true;
       errors.push({ message: "Torso rising", speech: "Keep your torso still and hinged forward, don't stand up to swing the weight." });
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadTorsoRiseThisRep; this.hadTorsoRiseThisRep = false;
+    return had ? { message: "Torso rising", speech: "Keep your torso still and hinged forward, don't stand up to swing the weight." } : null;
+  }
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.armRaise >= 150 && a.hipHinge >= 45 && a.hipHinge <= 100;

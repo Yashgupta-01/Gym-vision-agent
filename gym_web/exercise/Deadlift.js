@@ -12,7 +12,7 @@ export class DeadliftExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedDown = false; this.lastCountTime = 0;
+    this.reachedDown = false; this.hadRoundedBackThisRep = false; this.hadSquatHingeThisRep = false; this.lastCountTime = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_hip")+visibility(lm,"left_knee")+visibility(lm,"left_ankle"))/4;
@@ -39,11 +39,26 @@ export class DeadliftExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.spine < 145) errors.push({ message: "Keep back straight", speech: "Keep your back flat and chest up. Avoid rounding your spine." });
-    if (a.hip <= 120 && a.knee < 85) errors.push({ message: "Hinge at hips", speech: "Hinge at your hips rather than squatting down." });
+    if (this.prevState === "up" && this.currentState !== "up") {
+      this.hadRoundedBackThisRep = false; this.hadSquatHingeThisRep = false;
+    }
+    if (a.spine < 145) {
+      this.hadRoundedBackThisRep = true;
+      errors.push({ message: "Keep back straight", speech: "Keep your back flat and chest up. Avoid rounding your spine." });
+    }
+    if (a.hip <= 120 && a.knee < 85) {
+      this.hadSquatHingeThisRep = true;
+      errors.push({ message: "Hinge at hips", speech: "Hinge at your hips rather than squatting down." });
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const rounded = this.hadRoundedBackThisRep, squatHinge = this.hadSquatHingeThisRep;
+    this.hadRoundedBackThisRep = false; this.hadSquatHingeThisRep = false;
+    if (rounded) return { message: "Keep back straight", speech: "Keep your back flat and chest up. Avoid rounding your spine." };
+    if (squatHinge) return { message: "Hinge at hips", speech: "Hinge at your hips rather than squatting down." };
+    return null;
+  }
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.hip >= 160 && a.knee >= 160;

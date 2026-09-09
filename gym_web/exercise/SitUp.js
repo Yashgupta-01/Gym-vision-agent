@@ -10,20 +10,19 @@
 
 import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
-export
-class SitUpExercise {
+export class SitUpExercise {
   static key = "sit_up";
   static displayName = "Sit-Up";
   static startCue = "Lie on your back with knees bent, feet flat on the floor.";
   static minRepDuration = 0.8;
   static calibrationDuration = 2.0;
   static trackedLandmarks = ["shoulder", "hip", "knee", "ankle"];
-  static orientation = null; // lying down, same as GluteBridge/LegRaise
+  static orientation = null;
 
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedUp = false; this.lastCountTime = 0;
+    this.reachedUp = false; this.hadStraightLegsThisRep = false; this.lastCountTime = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_hip")+visibility(lm,"left_knee")+visibility(lm,"left_ankle"))/4;
@@ -47,10 +46,17 @@ class SitUpExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.knee > 150) errors.push({ message: "Bend your knees", speech: "Keep your knees bent and feet planted to protect your lower back." });
+    if (this.prevState === "down" && this.currentState !== "down") this.hadStraightLegsThisRep = false;
+    if (a.knee > 150) {
+      this.hadStraightLegsThisRep = true;
+      errors.push({ message: "Bend your knees", speech: "Keep your knees bent and feet planted to protect your lower back." });
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadStraightLegsThisRep; this.hadStraightLegsThisRep = false;
+    return had ? { message: "Bend your knees", speech: "Keep your knees bent and feet planted to protect your lower back." } : null;
+  }
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.hip >= 160 && a.knee >= 70 && a.knee <= 120;

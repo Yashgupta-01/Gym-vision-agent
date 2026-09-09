@@ -1,13 +1,4 @@
-// ─────────────────────────────────────────────────────────────
-//  FRONT RAISE
-//  Same hip->shoulder->wrist angle as LateralRaise — the difference is
-//  purely which plane the raise happens in. LateralRaise raises to the
-//  SIDE (needs a frontal camera, portrait); this raises FORWARD (needs
-//  a side-view camera, landscape) since a forward raise is only visible
-//  in profile.
-// ─────────────────────────────────────────────────────────────
 import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
-
 
 export class FrontRaiseExercise {
   static key = "front_raise";
@@ -21,7 +12,7 @@ export class FrontRaiseExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedUp = false; this.lastCountTime = 0;
+    this.reachedUp = false; this.hadOverSwingThisRep = false; this.lastCountTime = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_wrist")+visibility(lm,"left_hip"))/3;
@@ -44,12 +35,18 @@ export class FrontRaiseExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.raise > 95) errors.push({ message: "Raise controlled", speech: "Don't swing past shoulder height, control the weight on the way down too." });
-    else if (a.raise > 60 && a.raise < 79 && this.prevState === "mid")
+    if (this.prevState === "down" && this.currentState !== "down") this.hadOverSwingThisRep = false;
+    if (a.raise > 95) {
+      this.hadOverSwingThisRep = true;
+      errors.push({ message: "Raise controlled", speech: "Don't swing past shoulder height, control the weight on the way down too." });
+    } else if (a.raise > 60 && a.raise < 79 && this.prevState === "mid")
       errors.push({ message: "Raise higher", speech: "Raise the dumbbells until your arms are level with your shoulders." });
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadOverSwingThisRep; this.hadOverSwingThisRep = false;
+    return had ? { message: "Raise controlled", speech: "Don't swing past shoulder height, control the weight on the way down too." } : null;
+  }
   checkStartPosture(lm, w, h) {
     const side = this._activeSide(lm);
     return computeAngle(lm, `${side}_hip`, `${side}_shoulder`, `${side}_wrist`, w, h) < 40;

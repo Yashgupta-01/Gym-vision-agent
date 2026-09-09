@@ -12,7 +12,7 @@ export class ShoulderPressExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedUp = false; this.lastCountTime = 0;
+    this.reachedUp = false; this.hadUnevenPressThisRep = false; this.lastCountTime = 0;
   }
   computeAngles(lm, w, h) {
     const leftElbow = computeAngle(lm, "left_shoulder", "left_elbow", "left_wrist", w, h);
@@ -37,13 +37,18 @@ export class ShoulderPressExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.elbowDiff > 25 && a.avgElbow > 100 && a.avgElbow < 150)
+    if (a.elbowDiff > 25 && a.avgElbow > 100 && a.avgElbow < 150){
+      this.hadUnevenPressThisRep = true;
       errors.push({ message: "Press evenly", speech: "Push up evenly with both arms. Keep your movement balanced." });
+    }
     if (a.avgElbow >= 125 && a.avgElbow < 150 && this.currentState === "mid" && this.prevState === "up")
       errors.push({ message: "Full lockout", speech: "Fully extend your arms overhead at the top." });
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+      const had = this.hadUnevenPressThisRep; this.hadUnevenPressThisRep = false;
+      return had ? { message: "Press evenly", speech: "Push up evenly with both arms. Keep your movement balanced." } : null;
+  }
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.avgElbow >= 75 && a.avgElbow <= 110;

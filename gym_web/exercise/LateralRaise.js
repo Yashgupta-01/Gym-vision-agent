@@ -12,7 +12,7 @@ export class LateralRaiseExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedUp = false; this.lastCountTime = 0;
+    this.reachedUp = false; this.hadHandsCloseThisRep = false; this.lastCountTime = 0;
   }
   computeAngles(lm, w, h) {
     return {
@@ -32,18 +32,24 @@ export class LateralRaiseExercise {
   }
   checkFormErrors(a, lm, w, h) {
     const errors = [];
+    if (this.prevState === "down" && this.currentState !== "down") this.hadHandsCloseThisRep = false;
     const avg = (a.leftRaise + a.rightRaise) / 2;
     if (avg > 60 && avg <= 74 && this.prevState === "mid")
       errors.push({ message: "Raise higher", speech: "Raise your arms to shoulder height." });
     if (lm && (this.currentState === "mid" || this.currentState === "up")) {
       const lw = px(lm, "left_wrist", w, h), rw = px(lm, "right_wrist", w, h);
       const ls = px(lm, "left_shoulder", w, h), rs = px(lm, "right_shoulder", w, h);
-      if (Math.abs(lw[0] - rw[0]) < Math.abs(ls[0] - rs[0]) * 1.4)
+      if (Math.abs(lw[0] - rw[0]) < Math.abs(ls[0] - rs[0]) * 1.4) {
+        this.hadHandsCloseThisRep = true;
         errors.push({ message: "Hands too close", speech: "Expand your arms out to your sides." });
+      }
     }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadHandsCloseThisRep; this.hadHandsCloseThisRep = false;
+    return had ? { message: "Hands too close", speech: "Expand your arms out to your sides." } : null;
+  }
   checkStartPosture(lm, w, h) {
     return computeAngle(lm, "left_hip", "left_shoulder", "left_wrist", w, h) < 40;
   }

@@ -12,7 +12,7 @@ export class TricepDipExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedDown = false; this.lastCountTime = 0;
+    this.reachedDown = false; this.hadElbowFlareThisRep = false; this.lastCountTime = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_elbow")+visibility(lm,"left_wrist"))/3;
@@ -37,13 +37,19 @@ export class TricepDipExercise {
   }
   checkFormErrors(a) {
     const errors = [];
+    if (this.prevState === "up" && this.currentState !== "up") this.hadElbowFlareThisRep = false;
     if (a.elbow > 95 && a.elbow <= 115 && this.prevState !== "up")
       errors.push({ message: "Dip lower", speech: "Dip lower until your elbows are at a 90-degree angle." });
-    if (a.elbowFlareRatio > 0.8)
+    if (a.elbowFlareRatio > 0.8) {
+      this.hadElbowFlareThisRep = true;
       errors.push({ message: "Keep elbows tucked", speech: "Keep your elbows tucked back close to your body." });
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadElbowFlareThisRep; this.hadElbowFlareThisRep = false;
+    return had ? { message: "Keep elbows tucked", speech: "Keep your elbows tucked back close to your body." } : null;
+  }
   checkStartPosture(lm, w, h) { return this.computeAngles(lm, w, h).elbow >= 150; }
   getCalibrationChecks() {
     return [

@@ -1,11 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-//  FLY
-//  Lying position, arms open wide (T position) closing together above
-//  the chest. Same hip->shoulder->elbow angle family as LateralRaise/
-//  BentOverRow, but the exercise "opens" then "closes" (Squat/PushUp/
-//  BenchPress start/end pattern) rather than LateralRaise's down/up.
-// ─────────────────────────────────────────────────────────────
-
 import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
 export class FlyExercise {
@@ -20,7 +12,7 @@ export class FlyExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedClosed = false; this.lastCountTime = 0;
+    this.reachedClosed = false; this.hadElbowFormThisRep = false; this.elbowReason = null; this.lastCountTime = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_elbow")+visibility(lm,"left_wrist"))/3;
@@ -29,11 +21,7 @@ export class FlyExercise {
   }
   computeAngles(lm, w, h) {
     const side = this._activeSide(lm);
-    // Arm-arc angle: hip->shoulder->elbow. Wide open (T position) reads
-    // high; arms brought together above the chest reads low.
     const armAngle = computeAngle(lm, `${side}_hip`, `${side}_shoulder`, `${side}_elbow`, w, h);
-    // A fly keeps a fixed, soft elbow bend throughout — if the elbow
-    // straightens out, the movement has drifted into a press instead.
     const elbow = computeAngle(lm, `${side}_shoulder`, `${side}_elbow`, `${side}_wrist`, w, h);
     return { armAngle, elbow, activeSide: side };
   }
@@ -48,11 +36,25 @@ export class FlyExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.elbow > 175) errors.push({ message: "Soften your elbows", speech: "Keep a slight bend in your elbows, don't lock them straight." });
-    else if (a.elbow < 130) errors.push({ message: "Too much elbow bend", speech: "You're pressing, not flying. Keep your elbows fixed at a slight bend." });
+    if (this.prevState === "open" && this.currentState !== "open") {
+      this.hadElbowFormThisRep = false; this.elbowReason = null;
+    }
+    if (a.elbow > 175) {
+      this.hadElbowFormThisRep = true;
+      this.elbowReason = { message: "Soften your elbows", speech: "Keep a slight bend in your elbows, don't lock them straight." };
+      errors.push(this.elbowReason);
+    } else if (a.elbow < 130) {
+      this.hadElbowFormThisRep = true;
+      this.elbowReason = { message: "Too much elbow bend", speech: "You're pressing, not flying. Keep your elbows fixed at a slight bend." };
+      errors.push(this.elbowReason);
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const had = this.hadElbowFormThisRep; const reason = this.elbowReason;
+    this.hadElbowFormThisRep = false; this.elbowReason = null;
+    return had ? reason : null;
+  }
   checkStartPosture(lm, w, h) { return this.computeAngles(lm, w, h).armAngle >= 70; }
   getCalibrationChecks() {
     return [

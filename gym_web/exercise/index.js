@@ -26,6 +26,24 @@ import { SquatExercise } from "./Squat.js";
 import { TricepDipExercise } from "./TricepDip.js";
 import { TricepKickbackExercise } from "./TricepKickback.js";
 import { WallSitExercise } from "./WallSit.js";
+import { InclineBenchPressExercise } from "./InclineBenchPress.js";
+import { ChestPressMachineExercise } from "./ChestPressMachine.js";
+import { InclinePushUpExercise } from "./InclinePushup.js";
+import { DiamondPushUpExercise } from "./DiamondPushup.js";
+import { PecDeckExercise } from "./PecDeck.js";
+import { CableChestFlyExercise } from "./CableChestFly.js";
+import { BarbellOverheadPressExercise } from "./BarbellOverheadPress.js";
+import { MachineShoulderPressExercise } from "./MachineShoulderPress.js";
+import { CableLateralRaiseExercise } from "./CableLateralRaise.js";
+import { BarbellCurlExercise } from "./BarbellCurl.js";
+import { EzBarCurlExercise } from "./EzBarCurl.js";
+import { CableCurlExercise } from "./CableCurl.js";
+import { SeatedCableRowExercise } from "./SeatedCableRow.js";
+import { HackSquatExercise } from "./HackSquat.js";
+import { BarbellBackSquatExercise } from "./BarbellBackSquat.js";
+import { BarbellCalfRaiseExercise } from "./BarbellCalfRaise.js";
+import { CableCalfRaiseExercise } from "./CableCalfRaise.js";
+import { BenchDipExercise } from "./BenchDip.js";
 
 
 
@@ -58,6 +76,24 @@ export const Exercises = {
   tricep_dip: TricepDipExercise,
   tricep_kickback: TricepKickbackExercise,
   wall_sit: WallSitExercise,
+  incline_bench_press: InclineBenchPressExercise,
+  chest_press_machine: ChestPressMachineExercise,
+  incline_push_up: InclinePushupExercise,
+  diamond_push_up: DiamondPushupExercise,
+  pec_deck: PecDeckExercise,
+  cable_chest_fly: CableChestFlyExercise,
+  barbell_overhead_press: BarbellOverheadPressExercise,
+  machine_shoulder_press: MachineShoulderPressExercise,
+  cable_lateral_raise: CableLateralRaiseExercise,
+  barbell_curl: BarbellCurlExercise,
+  ez_bar_curl: EzBarCurlExercise,
+  cable_curl: CableCurlExercise,
+  seated_cable_row: SeatedCableRowExercise,
+  hack_squat: HackSquatExercise,
+  barbell_back_squat: BarbellBackSquatExercise,
+  barbell_calf_raise: BarbellCalfRaiseExercise,
+  cable_calf_raise: CableCalfRaiseExercise,
+  bench_dip: BenchDipExercise,
 };
 
 

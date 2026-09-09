@@ -12,7 +12,7 @@ export class MountainClimberExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedKneeIn = false; this.lastCountTime = 0;
+    this.reachedKneeIn = false; this.hadHipsHighThisRep = false; this.hadShallowThisRep = false; this.lastCountTime = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_hip")+visibility(lm,"left_knee")+visibility(lm,"left_ankle"))/4;
@@ -46,12 +46,25 @@ export class MountainClimberExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.normHipDev < -0.15) errors.push({ message: "Keep hips down", speech: "Keep your hips in line with your shoulders and plank." });
-    else if (a.activeHip > 95 && a.activeHip <= 120)
+    if (this.prevState === "extended" && this.currentState !== "extended") {
+      this.hadHipsHighThisRep = false; this.hadShallowThisRep = false;
+    }
+    if (a.normHipDev < -0.15) {
+      this.hadHipsHighThisRep = true;
+      errors.push({ message: "Keep hips down", speech: "Keep your hips in line with your shoulders and plank." });
+    } else if (a.activeHip > 95 && a.activeHip <= 120) {
+      this.hadShallowThisRep = true;
       errors.push({ message: "Drive knee closer", speech: "Drive your knee closer toward your chest." });
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const hipsHigh = this.hadHipsHighThisRep, shallow = this.hadShallowThisRep;
+    this.hadHipsHighThisRep = false; this.hadShallowThisRep = false;
+    if (hipsHigh) return { message: "Keep hips down", speech: "Keep your hips in line with your shoulders and plank." };
+    if (shallow) return { message: "Drive knee closer", speech: "Drive your knee closer toward your chest." };
+    return null;
+  }
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.leftHip >= 145 && a.rightHip >= 145 && Math.abs(a.normHipDev) <= 0.15;
