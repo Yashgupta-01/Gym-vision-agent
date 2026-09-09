@@ -129,6 +129,7 @@
 
 <script type="module">
 import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+import { Exercises } from "./exercise/index.js";
 
 // ─────────────────────────────────────────────────────────────
 //  Landmark map — extended vs. the squat-only prototype to also
@@ -209,7 +210,10 @@ function maxVis(lm, name) { return Math.max(visibility(lm, "left_"+name), visibi
 // ─────────────────────────────────────────────────────────────
 //  Exercise definitions
 //
-//  Each mirrors exercises/definitions.py's shape:
+//  All 28 exercise classes now live in ./exercise/*.js and are pulled
+//  in as a single module import (see top of file: `import { Exercises }
+//  from "./exercise/index.js"`). Each mirrors exercises/definitions.py's
+//  shape:
 //    computeAngles(lm,w,h)      -> dict of angle/ratio values
 //    getFsmState(a)             -> "up"/"down"/"mid" etc, sets reached* flags
 //    shouldCount()              -> debounced completion check
@@ -227,19 +231,6 @@ function maxVis(lm, name) { return Math.max(visibility(lm, "left_"+name), visibi
 //    trackedLandmarks           -> joints (no side prefix) this exercise's
 //                                  angle math depends on, used for the
 //                                  WORKING-phase visibility gate
-// ─────────────────────────────────────────────────────────────
-
-
-
-// ─────────────────────────────────────────────────────────────
-//  Registry additions:
-//
-//    const EXERCISES = {
-//      ...existing entries...,
-//      lat_pulldown: LatPulldownExercise,
-//      sit_up: SitUpExercise,
-//      russian_twist: RussianTwistExercise,
-//    };
 // ─────────────────────────────────────────────────────────────
 
 
@@ -311,33 +302,10 @@ function getAllCategories() {
   return [...new Set(Object.values(EXERCISE_CATEGORIES))].sort();
 }
 
-const EXERCISES = {
-  squat: SquatExercise,
-  push_up: PushUpExercise,
-  bicep_curl: BicepCurlExercise,
-  hammer_curl: HammerCurlExercise,
-  shoulder_press: ShoulderPressExercise,
-  lateral_raise: LateralRaiseExercise,
-  lunge: LungeExercise,
-  side_lunge: SideLungeExercise,
-  deadlift: DeadliftExercise,
-  glute_bridge: GluteBridgeExercise,
-  calf_raise: CalfRaiseExercise,
-  leg_raise: LegRaiseExercise,
-  plank: PlankExercise,
-  wall_sit: WallSitExercise,
-  jumping_jack: JumpingJackExercise,
-  high_knees: HighKneesExercise,
-  mountain_climber: MountainClimberExercise,
-  tricep_dip: TricepDipExercise,
-  bench_press: BenchPressExercise,
-  bent_over_row: BentOverRowExercise,
-  fly: FlyExercise,
-  front_raise: FrontRaiseExercise,
-  rear_delt_fly: RearDeltFlyExercise,
-  overhead_tricep_extension: OverheadTricepExtensionExercise,
-  tricep_kickback: TricepKickbackExercise,
-};
+// Pulled in from ./exercise/index.js — 28 keys, matches EXERCISE_CATEGORIES
+// above exactly. Previously this was a hand-written literal here that only
+// had 25 entries (missing lat_pulldown, sit_up, russian_twist).
+const EXERCISES = Exercises;
 
 
 let SELECTED_EXERCISE = "squat";
@@ -736,8 +704,26 @@ async function initModel() {
 
 async function startCamera() {
   const screenAspect = window.innerWidth / window.innerHeight;
+  // Request a resolution whose ASPECT RATIO actually matches the screen —
+  // a hardcoded square (960x960) is what caused the huge letterboxing on
+  // a portrait phone. Longest side capped at 1280 to stay fast on
+  // mid-range hardware.
+  const MAX_SIDE = 1280;
+  let idealWidth, idealHeight;
+  if (screenAspect >= 1) {
+    idealWidth = MAX_SIDE;
+    idealHeight = Math.round(MAX_SIDE / screenAspect);
+  } else {
+    idealHeight = MAX_SIDE;
+    idealWidth = Math.round(MAX_SIDE * screenAspect);
+  }
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode, aspectRatio: { ideal: screenAspect }, width: { ideal: 960 }, height: { ideal: 960 } },
+    video: {
+      facingMode,
+      aspectRatio: { ideal: screenAspect },
+      width: { ideal: idealWidth },
+      height: { ideal: idealHeight },
+    },
     audio: false,
   });
   video.srcObject = stream;
@@ -753,8 +739,21 @@ function resizeCanvasToViewport() {
   canvas.height = window.innerHeight;
   checkOrientation();
 }
+let lastAspectBucket = window.innerWidth >= window.innerHeight ? "landscape" : "portrait";
 window.addEventListener("resize", resizeCanvasToViewport);
-window.addEventListener("orientationchange", () => setTimeout(resizeCanvasToViewport, 200));
+window.addEventListener("orientationchange", () => setTimeout(async () => {
+  resizeCanvasToViewport();
+  const bucket = window.innerWidth >= window.innerHeight ? "landscape" : "portrait";
+  if (running && bucket !== lastAspectBucket) {
+    lastAspectBucket = bucket;
+    // Re-negotiate the camera stream to match the new orientation —
+    // otherwise it keeps its old (now wrong-aspect) resolution forever.
+    stopCamera();
+    await startCamera();
+  }
+}, 200));
+
+
 
 function stopCamera() {
   const stream = video.srcObject;

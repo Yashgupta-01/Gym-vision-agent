@@ -7,7 +7,7 @@
 //  trusting it to distinguish a real twist from hand wobble.
 // ─────────────────────────────────────────────────────────────
 
-import { px, dist, maxVis } from "js/landmarks.js";
+import { px, dist, maxVis } from "../js/landmarks.js";
 
 export
 class RussianTwistExercise {

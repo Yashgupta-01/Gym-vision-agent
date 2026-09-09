@@ -8,7 +8,7 @@
 //  captured at the start of the set — catches the common "standing up
 //  to heave the weight" cheat, which no existing exercise checks for.
 // ─────────────────────────────────────────────────────────────
-import { computeAngle, px, dist, maxVis, visibility } from "js/landmarks.js";
+import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
 export class BentOverRowExercise {
   static key = "bent_over_row";

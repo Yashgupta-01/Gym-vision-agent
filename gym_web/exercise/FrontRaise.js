@@ -6,7 +6,7 @@
 //  a side-view camera, landscape) since a forward raise is only visible
 //  in profile.
 // ─────────────────────────────────────────────────────────────
-import { computeAngle, px, dist, maxVis, visibility } from "js/landmarks.js";
+import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
 
 export class FrontRaiseExercise {

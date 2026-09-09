@@ -5,7 +5,7 @@
 //  back to the torso. See the reliability flag at the top of this file.
 // ─────────────────────────────────────────────────────────────
 
-import { computeAngle, px, dist, maxVis, visibility } from "js/landmarks.js";
+import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
 export class RearDeltFlyExercise {
   static key = "rear_delt_fly";

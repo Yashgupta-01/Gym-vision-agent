@@ -1,52 +1,67 @@
-
-
 import { BenchPressExercise } from "./BenchPress.js";
 import { BentOverRowExercise } from "./BentOverRow.js";
 import { BicepCurlExercise } from "./BicepCurl.js";
-import { CalfRaiseExercise } from "./CalfRaise.js";
-import { DeadLiftExercise } from "./DeadLift.js";
+import { CalfRaiseExercise } from "./CalfRaises.js";
+import { DeadliftExercise } from "./Deadlift.js";
+import { FlyExercise } from "./Fly.js";
+import { FrontRaiseExercise } from "./FrontRaise.js";
 import { GluteBridgeExercise } from "./GluteBridge.js";
 import { HammerCurlExercise } from "./HammerCurl.js";
-import { JumpingJackExercise } from "./JumpingJack.js";
+import { HighKneesExercise } from "./HighKnees.js";
 import { JumpingJackExercise } from "./JumpingJack.js";
 import { LatPulldownExercise } from "./LatPullDown.js";
-import { LatRaiseExercise } from "./LatRaise.js";
+import { LateralRaiseExercise } from "./LateralRaise.js";
 import { LegRaiseExercise } from "./LegRaise.js";
-import { LungeExercise } from "./Lung.js";
-import { LungExercise } from "./Lung.js";
+import { LungeExercise } from "./Lunges.js";
+import { MountainClimberExercise } from "./MountainClimber.js";
 import { OverheadTricepExtensionExercise } from "./OverheadTricepExtension.js";
 import { PlankExercise } from "./Plank.js";
-import { PushUpExercise } from "./PushUp.js";
+import { PushUpExercise } from "./Pushup.js";
+import { RearDeltFlyExercise } from "./RearDeltFly.js";
 import { RussianTwistExercise } from "./RussianTwist.js";
+import { ShoulderPressExercise } from "./ShoulderPress.js";
+import { SideLungeExercise } from "./SideLunges.js";
 import { SitUpExercise } from "./SitUp.js";
 import { SquatExercise } from "./Squat.js";
-import { TricepsDipExercise } from "./TricepsDip.js";
+import { TricepDipExercise } from "./TricepDip.js";
+import { TricepKickbackExercise } from "./TricepKickback.js";
 import { WallSitExercise } from "./WallSit.js";
 
-export const Exercises ={
-  benchpress: BenchPressExercise,
-  bentoverrow: BentOverRowExercise,
-  bicepcurl: BicepCurlExercise,
-  calfraise: CalfRaiseExercise,
-  deadlift: DeadLiftExercise,
-  glutebridge: GluteBridgeExercise,
-  hammercurl: HammerCurlExercise,
-  jumpingjack: JumpingJackExercise,
-  latpulldown: LatPulldownExercise,
-  latraise: LatRaiseExercise,
-  legraise: LegRaiseExercise,
-  lunge: LungeExercise,
-  overheadtricepextension: OverheadTricepExtensionExercise,
-  plank: PlankExercise,
-  pushup: PushUpExercise,
-  russiantwist: RussianTwistExercise,
-  situp: SitUpExercise,
-  squat: SquatExercise,
-  tricepsdip: TricepsDipExercise,
-  wallsit: WallSitExercise,
-}
 
-export function createExercise(key){
+
+export const Exercises = {
+  bench_press: BenchPressExercise,
+  bent_over_row: BentOverRowExercise,
+  bicep_curl: BicepCurlExercise,
+  calf_raise: CalfRaiseExercise,
+  deadlift: DeadliftExercise,
+  fly: FlyExercise,
+  front_raise: FrontRaiseExercise,
+  glute_bridge: GluteBridgeExercise,
+  hammer_curl: HammerCurlExercise,
+  high_knees: HighKneesExercise,
+  jumping_jack: JumpingJackExercise,
+  lat_pulldown: LatPulldownExercise,
+  lateral_raise: LateralRaiseExercise,
+  leg_raise: LegRaiseExercise,
+  lunge: LungeExercise,
+  mountain_climber: MountainClimberExercise,
+  overhead_tricep_extension: OverheadTricepExtensionExercise,
+  plank: PlankExercise,
+  push_up: PushUpExercise,
+  rear_delt_fly: RearDeltFlyExercise,
+  russian_twist: RussianTwistExercise,
+  shoulder_press: ShoulderPressExercise,
+  side_lunge: SideLungeExercise,
+  sit_up: SitUpExercise,
+  squat: SquatExercise,
+  tricep_dip: TricepDipExercise,
+  tricep_kickback: TricepKickbackExercise,
+  wall_sit: WallSitExercise,
+};
+
+
+export function createExercise(key) {
   const Cls = Exercises[key];
   if (!Cls) throw new Error("Unknown exercise: " + key);
   return new Cls();

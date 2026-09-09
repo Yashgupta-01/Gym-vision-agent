@@ -1,5 +1,5 @@
 
-import { computeAngle, px, dist, maxVis, visibility } from "js/landmarks.js";
+import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
 export class PushUpExercise {
   static key = "push_up";

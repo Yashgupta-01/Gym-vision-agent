@@ -6,7 +6,7 @@
 //  BenchPress start/end pattern) rather than LateralRaise's down/up.
 // ─────────────────────────────────────────────────────────────
 
-import { computeAngle, px, dist, maxVis, visibility } from "js/landmarks.js";
+import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
 export class FlyExercise {
   static key = "fly";

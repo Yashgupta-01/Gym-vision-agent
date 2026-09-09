@@ -1,4 +1,4 @@
-import { BicepCurlExercise } from "../exercise/BicepCurl.js";
+import { BicepCurlExercise } from "./BicepCurl.js";
 
 export class HammerCurlExercise extends BicepCurlExercise {
   static key = "hammer_curl";

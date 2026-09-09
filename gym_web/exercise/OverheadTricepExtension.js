@@ -6,7 +6,7 @@
 //  forearm should move.
 // ─────────────────────────────────────────────────────────────
 
-import { computeAngle, px, dist, maxVis, visibility } from "js/landmarks.js";
+import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 export class OverheadTricepExtensionExercise {
   static key = "overhead_tricep_extension";
   static displayName = "Overhead Tricep Extension";

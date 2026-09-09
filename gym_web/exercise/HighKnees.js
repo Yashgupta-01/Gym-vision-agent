@@ -1,4 +1,4 @@
-import { computeAngle, px, dist, maxVis, visibility } from "js/landmarks.js";
+import { computeAngle, px, dist, maxVis, visibility } from "../js/landmarks.js";
 
 export class HighKneesExercise {
   static key = "high_knees";
