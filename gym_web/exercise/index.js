@@ -27,6 +27,7 @@ import { JumpingJackExercise } from "./JumpingJack.js";
 import { LateralRaiseExercise } from "./LateralRaise.js";
 import { LatPulldownExercise } from "./LatPullDown.js";
 import { LegCurlExercise } from "./LegCurl.js";
+import { LegExtensionExercise } from "./LegExtension.js";
 import { LegPressExercise } from "./LegPress.js";
 import { LegRaiseExercise } from "./LegRaise.js";
 import { LungeExercise } from "./Lunges.js";
@@ -68,7 +69,7 @@ export const Exercises = {
   calf_raise: CalfRaiseExercise,
   chest_press_machine: ChestPressMachineExercise,
   deadlift: DeadliftExercise,
-  diamond_push_up: DiamondPushupExercise,
+  diamond_push_up: DiamondPushUpExercise,
   ez_bar_curl: EzBarCurlExercise,
   fly: FlyExercise,
   front_raise: FrontRaiseExercise,
@@ -77,11 +78,12 @@ export const Exercises = {
   hammer_curl: HammerCurlExercise,
   high_knees: HighKneesExercise,
   incline_bench_press: InclineBenchPressExercise,
-  incline_push_up: InclinePushupExercise,
+  incline_push_up: InclinePushUpExercise,
   jumping_jack: JumpingJackExercise,
   lat_pulldown: LatPulldownExercise,
   lateral_raise: LateralRaiseExercise,
   leg_curl: LegCurlExercise,
+  leg_extension: LegExtensionExercise,
   leg_press: LegPressExercise,
   leg_raise: LegRaiseExercise,
   lunge: LungeExercise,

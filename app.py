@@ -24,7 +24,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-import google.generativeai as genai
+from google import genai
+from google.genai import types as genai_types
 
 load_dotenv()
 
@@ -36,13 +37,12 @@ if not GEMINI_API_KEY:
         "or your environment — never hardcode it in source."
     )
 
-genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # Free-tier-friendly, low-latency model — good fit for short in-session
 # replies spoken aloud mid-set. Override via env if you want a bigger model
 # for the post-session comparison narrative later (Section 46 item 7).
 MODEL_NAME = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
-model = genai.GenerativeModel(MODEL_NAME)
 
 # Section 43: gym + health + session scope only, short answers, no diagnosis.
 # Section 49: this service never touches MediaPipe/landmarks/video — it only
@@ -73,13 +73,20 @@ Rules:
 
 app = FastAPI(title="Ignite Ask Coach")
 
-# CORS: WebView origin varies by environment (bundled local asset vs. dev
-# server), so this stays permissive for now. Tighten to the real deployed
-# origin(s) before this leaves prototype (Section 59 item 7 — the HTTPS/
-# deployment path is still an open decision anyway).
+# CORS: reads a comma-separated ALLOWED_ORIGINS env var so the same code
+# works in both states — unset/empty falls back to "*" for local dev and
+# the react-native-webview bundled-asset case (Section 50: the WebView
+# origin there is effectively file://, which doesn't benefit from a strict
+# allowlist anyway). Once this is deployed behind a real domain and the
+# WebView points at it over HTTPS (Section 59 item 7), set
+# ALLOWED_ORIGINS=https://your-deployed-origin.com in the environment —
+# no code change needed at that point.
+_origins_env = os.environ.get("ALLOWED_ORIGINS", "").strip()
+ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()] or ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["POST"],
     allow_headers=["*"],
 )
@@ -128,10 +135,13 @@ def build_prompt(req: AskRequest) -> str:
 def ask_coach(req: AskRequest):
     prompt = build_prompt(req)
     try:
-        response = model.generate_content(
-            [SYSTEM_PROMPT, prompt],
-            generation_config={"max_output_tokens": 120, "temperature": 0.4},
-            request_options={"timeout": 8},  # short — never hang the mic UI
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=f"{SYSTEM_PROMPT}\n\n{prompt}",
+            config=genai_types.GenerateContentConfig(
+                max_output_tokens=120,
+                temperature=0.4,
+            ),
         )
         text = (response.text or "").strip()
         return AskResponse(reply=text or FALLBACK_REPLY)

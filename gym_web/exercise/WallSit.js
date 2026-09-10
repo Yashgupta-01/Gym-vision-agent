@@ -15,6 +15,7 @@ export class WallSitExercise {
     this.currentState = null; this.prevState = null;
     this.holdStartTime = 0; this.wasHolding = false; this.lastCountTime = 0;
     this._currentTime = 0;
+    this.holdFrames = 0; this.holdErrorFrames = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_hip")+visibility(lm,"left_knee")+visibility(lm,"left_ankle"))/4;
@@ -30,8 +31,11 @@ export class WallSitExercise {
   }
   getFsmState(a) {
     if (a.knee >= 80 && a.knee <= 105 && a.hip >= 75 && a.hip <= 115) {
-      if (!this.wasHolding) { this.holdStartTime = this._currentTime; this.wasHolding = true; }
-      return "hold";
+      if (!this.wasHolding) {
+        this.holdStartTime = this._currentTime;
+        this.wasHolding = true;
+        this.holdFrames = 0; this.holdErrorFrames = 0;
+      }      return "hold";
     }
     this.wasHolding = false;
     return "break";
@@ -46,9 +50,21 @@ export class WallSitExercise {
     if (a.knee > 105) errors.push({ message: "Sink lower", speech: "Sink lower until your thighs are parallel to the floor." });
     else if (a.knee < 75) errors.push({ message: "Too low", speech: "Raise your hips slightly to bring knees to 90 degrees." });
     if (a.hip < 75) errors.push({ message: "Keep back flat", speech: "Keep your back flat against the wall and chest up." });
+    
+    if (this.currentState === "hold") {
+      this.holdFrames++;
+      if (errors.length) this.holdErrorFrames++;
+    }
     return errors;
   }
-  getRepQualityErrors() { return null; }
+  getRepQualityErrors() {
+    const frames = this.holdFrames, errFrames = this.holdErrorFrames;
+    this.holdFrames = 0; this.holdErrorFrames = 0;
+    if (frames > 0 && errFrames / frames > 0.4) {
+      return { message: "Form broke down", speech: "Your form slipped too much during that hold — reset and try again for full credit." };
+    }
+    return null;
+  }  
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.knee >= 80 && a.knee <= 105 && a.hip >= 75 && a.hip <= 115;

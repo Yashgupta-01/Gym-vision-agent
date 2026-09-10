@@ -1,0 +1,35 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Gym Vision Agent — unified requirements
+#
+# Covers both sub-systems:
+#   1. gym_vision_agent/main.py  — desktop OpenCV + MediaPipe agent
+#   2. app.py                    — FastAPI "Ask Coach" Gemini backend
+#
+# Install into the project venv:
+#   .venv\Scripts\pip install -r requirements.txt
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Shared: computer vision ───────────────────────────────────────────────────
+opencv-python==4.9.0.80
+mediapipe==0.10.13
+numpy>=1.24.0
+
+# ── Shared: protobuf / gRPC (pinned for mediapipe 0.10.13 compatibility) ─────
+protobuf>=4.25.3,<4.26.0
+grpcio-status<1.62.0
+
+# ── Shared: image handling ────────────────────────────────────────────────────
+pillow<12
+packaging<25.0
+
+# ── Desktop agent (gym_vision_agent/main.py) ──────────────────────────────────
+pyttsx3>=2.90        # TTS engine
+comtypes>=1.2.0      # Windows SAPI5 backend required by pyttsx3 on Windows
+PyYAML>=6.0          # config / data loading
+
+# ── FastAPI "Ask Coach" backend (app.py) ──────────────────────────────────────
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+google-genai          # replaces deprecated google-generativeai

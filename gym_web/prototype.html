@@ -78,6 +78,10 @@
   }
   #hint { margin-top: 18px; color: #666; font-size: 12px; max-width: 280px; }
   #status { position: absolute; bottom: 10px; left: 10px; right: 10px; font-size: 11px; color: #555; z-index: 10; text-align: center; }
+
+  #micBtn.mic-listening { background: #dc2828; border-color: #dc2828; }
+  #micBtn.mic-thinking { background: #ffd23f; color: #111; }
+
 </style>
 </head>
 <body>
@@ -105,6 +109,7 @@
 <div id="stage" style="display:none;">
   <div id="topbar">
     <div class="pill" id="fpsPill">FPS --</div>
+    <button class="btn" id="micBtn" title="Hold to ask coach">🎤</button>
     <button class="btn" id="flipBtn">⟲ Flip</button>
   </div>
   <video id="video" playsinline autoplay muted></video>
@@ -130,6 +135,8 @@
 <script type="module">
 import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 import { Exercises } from "./exercise/index.js";
+import { initAskCoach } from "./js/ask-coach.js";
+
 
 // ─────────────────────────────────────────────────────────────
 //  Landmark map — extended vs. the squat-only prototype to also
@@ -336,17 +343,28 @@ for (const key of Object.keys(EXERCISES)) {
 //  Voice
 // ─────────────────────────────────────────────────────────────
 const voice = {
-  lastMsg: "", lastTime: 0, cooldown: 3000,
-  speak(text, priority=false) {
-    const now = Date.now();
-    if (!priority && text === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
-    if (!priority && (now - this.lastTime) < 800) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 1.05;
-    window.speechSynthesis.speak(u);
-    this.lastMsg = text;
-    this.lastTime = now;
+  lastMsg: "",
+  lastTime: 0,
+  cooldown: 3000,
+  currentSource: null, // "coach" while an Ask Coach reply is playing, else null
+  speak(text, priority = false, source = "form") {
+    try {
+      const now = Date.now();
+      if (!priority && text === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
+      if (!priority && (now - this.lastTime) < 800) return;
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.05;
+      u.onstart = () => { this.currentSource = source; };
+      u.onend = () => { if (this.currentSource === source) this.currentSource = null; };
+      window.speechSynthesis.speak(u);
+      this.lastMsg = text;
+      this.lastTime = now;
+    } 
+    catch (e) {
+      console.warn("TTS failed", e);
+    }
   }
 };
 
@@ -364,6 +382,27 @@ let calActiveId = null;
 let coreWasVisible = true;
 
 let ex = new EXERCISES[SELECTED_EXERCISE]();
+
+// Section 46 item 5: built once per push-to-talk press, not polled.
+let recentFormErrorLog = [];
+function logFormError(msg) {
+  if (recentFormErrorLog[recentFormErrorLog.length - 1] === msg) return;
+  recentFormErrorLog.push(msg);
+  if (recentFormErrorLog.length > 3) recentFormErrorLog.shift();
+}
+
+window.buildSessionSnapshot = function () {
+  return {
+    exercise: ex.constructor.displayName,
+    set: currentSet,
+    reps: repCount,
+    targetReps: TARGET_REPS,
+    targetSets: TARGET_SETS,
+    phase,
+    recentFormErrors: recentFormErrorLog,
+    lastCue: voice.lastMsg || "",
+  };
+};
 
 function coreVisible(lm) {
   return visibility(lm,"left_shoulder") > 0.4 && visibility(lm,"right_shoulder") > 0.4 &&
@@ -523,6 +562,7 @@ function processFrame(lm, w, h, timestamp) {
     }
 
     if (errs.length) voice.speak(errs[0].speech, false);
+    if (errs.length) logFormError(errs[0].message);
     uiState.message = "";
     return;
   }
@@ -844,6 +884,7 @@ startBtn.addEventListener("click", async () => {
     running = true;
     statusEl.textContent = "";
     checkOrientation();
+    initAskCoach();
     requestAnimationFrame(renderLoop);
   } catch (err) {
     statusEl.textContent = "Error: " + err.message;

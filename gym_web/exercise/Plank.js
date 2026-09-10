@@ -15,6 +15,7 @@ export class PlankExercise {
     this.currentState = null; this.prevState = null;
     this.holdStartTime = 0; this.wasHolding = false; this.lastCountTime = 0;
     this._currentTime = 0;
+    this.holdFrames = 0; this.holdErrorFrames = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_hip")+visibility(lm,"left_ankle"))/3;
@@ -35,8 +36,11 @@ export class PlankExercise {
   }
   getFsmState(a) {
     if (a.bodyLine >= 160 && a.bodyLine <= 180 && Math.abs(a.normHipDev) <= 0.12) {
-      if (!this.wasHolding) { this.holdStartTime = this._currentTime; this.wasHolding = true; }
-      return "hold";
+    if (!this.wasHolding) {
+        this.holdStartTime = this._currentTime;
+        this.wasHolding = true;
+        this.holdFrames = 0; this.holdErrorFrames = 0;
+      }      return "hold";
     }
     this.wasHolding = false;
     return "break";
@@ -49,10 +53,26 @@ export class PlankExercise {
   checkFormErrors(a) {
     const errors = [];
     if (a.normHipDev < -0.12) errors.push({ message: "Hips too high", speech: "Lower your hips into a straight plank position." });
-    else if (a.normHipDev > 0.12) errors.push({ message: "Hips sagging", speech: "Engage your core and lift your hips." });
-    return errors;
+    if (this.currentState === "hold") {
+      this.holdFrames++;
+      if (errors.length) this.holdErrorFrames++;
+    }    return errors;
   }
-  getRepQualityErrors() { return null; }
+
+  
+  getRepQualityErrors() {
+    // Section 63 decision: a hold that spent more than 40% of its total
+    // time out of correct form doesn't earn full credit — a brief dip
+    // still counts, sustained bad form doesn't.
+    const frames = this.holdFrames, errFrames = this.holdErrorFrames;
+    this.holdFrames = 0; this.holdErrorFrames = 0;
+    if (frames > 0 && errFrames / frames > 0.4) {
+      return { message: "Form broke down", speech: "Your form slipped too much during that hold — reset and try again for full credit." };
+    }
+    return null;
+  }  
+  
+  
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
     return a.bodyLine >= 160 && a.bodyLine <= 180 && Math.abs(a.normHipDev) <= 0.12;
