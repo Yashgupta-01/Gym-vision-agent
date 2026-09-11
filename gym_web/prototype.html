@@ -103,7 +103,7 @@
     </div>
   </div>
   <button class="primaryBtn" id="startBtn">Start Camera</button>
-  <div id="hint" id="hintText">Point the phone so your full body is visible, feet to head, facing the camera.</div>
+  <div id="hintText">Point the phone so your full body is visible, feet to head, facing the camera.</div>
 </div>
 
 <div id="stage" style="display:none;">
@@ -403,6 +403,12 @@ window.buildSessionSnapshot = function () {
     lastCue: voice.lastMsg || "",
   };
 };
+
+// ask-coach.js is a separate ES module — it can't see this file's
+// module-scoped `const voice`, so expose it the same way as
+// buildSessionSnapshot above.
+window.voice = voice;
+
 
 function coreVisible(lm) {
   return visibility(lm,"left_shoulder") > 0.4 && visibility(lm,"right_shoulder") > 0.4 &&

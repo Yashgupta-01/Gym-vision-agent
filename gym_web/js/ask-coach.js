@@ -8,7 +8,7 @@
 // sendToCoach()/the snapshot shape are identical either way — only how the
 // transcript is obtained differs.// below this line (snapshot building, fetch, fallback) is unchanged either way.
 
-const ASK_COACH_URL = "http://localhost:8000/ask-coach"; // update once deployed (Section 59 item 7)
+const ASK_COACH_URL = "http://192.168.29.196:8080:8000/ask-coach"; // update once deployed (Section 59 item 7)
 const REQUEST_TIMEOUT_MS = 5000;
 const FALLBACK_REPLY = "Sorry, I couldn't reach the coach just now — keep going, I'll catch up.";
 
@@ -80,17 +80,17 @@ export function initAskCoach() {
     return;
   }
 
-// Native path: RN sends the finished transcript back as
-// {type: "sttResult", transcript: "..."} via the WebView's injected
-// message channel. This listener is a no-op in plain-browser testing
-// since RN never posts these messages there.
+  // Native path: RN sends the finished transcript back as
+  // {type: "sttResult", transcript: "..."} via the WebView's injected
+  // message channel. This listener is a no-op in plain-browser testing
+  // since RN never posts these messages there.
   window.addEventListener("message", async (event) => {
     let payload;
     try { payload = JSON.parse(event.data); } catch { return; }
     if (payload?.type !== "sttResult" || !payload.transcript) return;
     setMicVisual("thinking");
     const reply = await sendToCoach(payload.transcript);
-    voice.speak(reply, false, "coach");
+    window.voice.speak(reply, false, "coach");
     setMicVisual("idle");
   });
 
@@ -120,7 +120,7 @@ export function initAskCoach() {
       // Low priority + tagged "coach" — a live form correction will still
       // cut this off unconditionally (voice.js's cancel() is unconditional
       // regardless of this call's own priority flag).
-      voice.speak(reply, false, "coach");
+      window.voice.speak(reply, false, "coach");
       setMicVisual("idle");
     };
     recognition.onerror = () => {
