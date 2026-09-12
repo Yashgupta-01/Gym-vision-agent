@@ -1,135 +1,316 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Gym Vision AI — Multi-Exercise Prototype</title>
-<style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    margin: 0; padding: 0; width: 100%; height: 100%;
-    background: #0a0a0a; color: #fff;
-    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-    overflow: hidden; overscroll-behavior: none;
-  }
-  #stage {
-    position: relative; width: 100%; height: 100vh;
-    display: flex; align-items: center; justify-content: center;
-  }
-  video { display: none; }
-  canvas {
-    width: 100vw; height: 100vh; display: block;
-    background: #000;
-  }
-  #rotatePrompt, #restScreen, #doneScreen {
-    position: absolute; inset: 0; z-index: 30; display: none;
-    flex-direction: column; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.92); text-align: center; padding: 24px;
-  }
-  #rotatePrompt.show, #restScreen.show, #doneScreen.show { display: flex; }
-  #rotatePrompt .icon { font-size: 54px; margin-bottom: 16px; }
-  #rotatePrompt p { color: #ffd23f; font-size: 16px; max-width: 260px; }
-  #topbar {
-    position: absolute; top: 0; left: 0; right: 0;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 14px; z-index: 10; pointer-events: none;
-  }
-  #topbar button { pointer-events: auto; }
-  .pill {
-    background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 20px; padding: 6px 14px; font-size: 13px; color: #ffd23f;
-  }
-  .btn {
-    background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.3);
-    color: #fff; border-radius: 10px; padding: 8px 14px; font-size: 14px;
-  }
-  #startScreen {
-    position: absolute; inset: 0; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center;
-    background: #0a0a0a; z-index: 20; padding: 24px; overflow-y: auto;
-  }
-  #startScreen h1 { color: #ffd23f; font-size: 26px; margin-bottom: 4px; letter-spacing: 1px; }
-  #startScreen p { color: #999; font-size: 14px; margin-bottom: 20px; }
-  .exercise-grid {
-    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-    max-width: 380px; margin-bottom: 22px;
-  }
-  .ex-pill {
-    background: #161616; border: 1px solid rgba(255,255,255,0.2);
-    color: #ccc; padding: 10px 16px; border-radius: 12px; font-size: 13px;
-    cursor: pointer; user-select: none;
-  }
-  .ex-pill.selected {
-    background: #ffd23f; color: #111; border-color: #ffd23f; font-weight: 600;
-  }
-  .config-box {
-    display: flex; gap: 16px; justify-content: center; margin-bottom: 28px;
-  }
-  .config-group { text-align: left; }
-  .config-group label { font-size: 11px; color: #999; display: block; margin-bottom: 6px; letter-spacing: 0.5px; }
-  .config-group input {
-    background: #161616; border: 1px solid rgba(255,255,255,0.2);
-    color: #ffd23f; padding: 10px 14px; border-radius: 12px; width: 90px;
-    font-size: 18px; font-weight: 600; text-align: center; outline: none;
-  }
-  .primaryBtn {
-    background: #ffd23f; color: #111; border: none; border-radius: 14px;
-    padding: 16px 36px; font-size: 17px; font-weight: 600; cursor: pointer;
-  }
-  #hint { margin-top: 18px; color: #666; font-size: 12px; max-width: 280px; }
-  #status { position: absolute; bottom: 10px; left: 10px; right: 10px; font-size: 11px; color: #555; z-index: 10; text-align: center; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Gym Vision AI — Multi-Exercise Prototype</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-  #micBtn.mic-listening { background: #dc2828; border-color: #dc2828; }
-  #micBtn.mic-thinking { background: #ffd23f; color: #111; }
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a0a0a;
+      color: #fff;
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
 
-  #coachPanel {
-    position: absolute; bottom: 70px; left: 12px; right: 12px;
-    z-index: 15; display: none; flex-direction: column; gap: 4px;
-  }
-  #coachPanel.show { display: flex; }
-  .coachBubble {
-    background: rgba(0,0,0,0.75); border-radius: 12px; padding: 8px 12px;
-    font-size: 13px; color: #fff; max-width: 90%; align-self: flex-start;
-  }
-  .coachBubble.you { align-self: flex-end; background: rgba(255,210,63,0.9); color: #111; }
-  .coachBubble.status { align-self: center; background: transparent; color: #999; font-style: italic; }
+    #stage {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-</style>
+    video {
+      display: none;
+    }
+
+    canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      background: #000;
+    }
+
+    #rotatePrompt,
+    #restScreen,
+    #doneScreen {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.92);
+      text-align: center;
+      padding: 24px;
+    }
+
+    #rotatePrompt.show,
+    #restScreen.show,
+    #doneScreen.show {
+      display: flex;
+    }
+
+    #rotatePrompt .icon {
+      font-size: 54px;
+      margin-bottom: 16px;
+    }
+
+    #rotatePrompt p {
+      color: #ffd23f;
+      font-size: 16px;
+      max-width: 260px;
+    }
+
+    #topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    #topbar button {
+      pointer-events: auto;
+    }
+
+    .pill {
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: #ffd23f;
+    }
+
+    .btn {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 14px;
+    }
+
+    #startScreen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: #0a0a0a;
+      z-index: 20;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    #startScreen h1 {
+      color: #ffd23f;
+      font-size: 26px;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+
+    #startScreen p {
+      color: #999;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .exercise-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 380px;
+      margin-bottom: 22px;
+    }
+
+    .ex-pill {
+      background: #161616;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ccc;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .ex-pill.selected {
+      background: #ffd23f;
+      color: #111;
+      border-color: #ffd23f;
+      font-weight: 600;
+    }
+
+    .config-box {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+
+    .config-group {
+      text-align: left;
+    }
+
+    .config-group label {
+      font-size: 11px;
+      color: #999;
+      display: block;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .config-group input {
+      background: #161616;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffd23f;
+      padding: 10px 14px;
+      border-radius: 12px;
+      width: 90px;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+    }
+
+    .primaryBtn {
+      background: #ffd23f;
+      color: #111;
+      border: none;
+      border-radius: 14px;
+      padding: 16px 36px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #hint {
+      margin-top: 18px;
+      color: #666;
+      font-size: 12px;
+      max-width: 280px;
+    }
+
+    #status {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      font-size: 11px;
+      color: #555;
+      z-index: 10;
+      text-align: center;
+    }
+
+    #micBtn.mic-listening {
+      background: #dc2828;
+      border-color: #dc2828;
+    }
+
+    #micBtn.mic-thinking {
+      background: #ffd23f;
+      color: #111;
+    }
+
+    #coachPanel {
+      position: absolute;
+      bottom: 70px;
+      left: 12px;
+      right: 12px;
+      z-index: 15;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    #coachPanel.show {
+      display: flex;
+    }
+
+    .coachBubble {
+      background: rgba(0, 0, 0, 0.75);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #fff;
+      max-width: 90%;
+      align-self: flex-start;
+    }
+
+    .coachBubble.you {
+      align-self: flex-end;
+      background: rgba(255, 210, 63, 0.9);
+      color: #111;
+    }
+
+    .coachBubble.status {
+      align-self: center;
+      background: transparent;
+      color: #999;
+      font-style: italic;
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="startScreen">
-  <h1>GYM VISION AI</h1>
-  <p>Choose an exercise — real-time form check prototype</p>
+  <div id="startScreen">
+    <h1>GYM VISION AI</h1>
+    <p>Choose an exercise — real-time form check prototype</p>
 
-  <div class="exercise-grid" id="exerciseGrid"></div>
+    <div class="exercise-grid" id="exerciseGrid"></div>
 
-  <div class="config-box">
-    <div class="config-group">
-      <label>REPS / SET</label>
-      <input type="number" id="targetRepsInput" value="10" min="1" max="50">
+    <div class="config-box">
+      <div class="config-group">
+        <label>REPS / SET</label>
+        <input type="number" id="targetRepsInput" value="10" min="1" max="50">
+      </div>
+      <div class="config-group">
+        <label>TOTAL SETS</label>
+        <input type="number" id="targetSetsInput" value="3" min="1" max="10">
+      </div>
     </div>
-    <div class="config-group">
-      <label>TOTAL SETS</label>
-      <input type="number" id="targetSetsInput" value="3" min="1" max="10">
-    </div>
+    <button class="primaryBtn" id="startBtn">Start Camera</button>
+    <div id="hintText">Point the phone so your full body is visible, feet to head, facing the camera.</div>
   </div>
-  <button class="primaryBtn" id="startBtn">Start Camera</button>
-  <div id="hintText">Point the phone so your full body is visible, feet to head, facing the camera.</div>
-</div>
 
-<div id="stage" style="display:none;">
-  <div id="topbar">
-    <div class="pill" id="fpsPill">FPS --</div>
+  <div id="stage" style="display:none;">
+    <div id="topbar">
+      <div class="pill" id="fpsPill">FPS --</div>
+      <button class="btn" id="micBtn" title="Hold to ask coach">🎤</button>
+      <button class="btn" id="flipBtn">⟲ Flip</button>
+    </div>
     <div id="coachPanel"></div>
-    <button class="btn" id="micBtn" title="Hold to ask coach">🎤</button>
-    <button class="btn" id="flipBtn">⟲ Flip</button>
-  </div>
-  <video id="video" playsinline autoplay muted></video>
-  <canvas id="canvas"></canvas>
-  <div id="rotatePrompt">
-    <div class="icon">📱↕️</div>
-    <p id="rotateMsg">This exercise needs your phone in PORTRAIT — rotate it upright and step back so your full body is visible.</p>
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="canvas"></canvas>
+    <div id="rotatePrompt">
+      <div class="icon">📱↕️</div>
+      <p id="rotateMsg">This exercise needs your phone in PORTRAIT — rotate it upright and step back so your full body is visible.</p>
+    </div>
   </div>
   <div id="restScreen">
     <h2 id="restTitle" style="color: #ffd23f; font-size: 24px; margin-bottom: 8px;">Set 1 Complete!</h2>
@@ -141,815 +322,817 @@
     <p id="doneSummary" style="color: #ccc; font-size: 15px; margin-bottom: 24px;"></p>
     <button class="primaryBtn" id="restartBtn">Finish / Restart</button>
   </div>
-</div>
 
-<div id="status"></div>
+  <div id="status"></div>
 
-<script type="module">
-import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
-import { Exercises } from "./exercise/index.js";
-import { initAskCoach } from "./js/ask-coach.js";
-
-
-// ─────────────────────────────────────────────────────────────
-//  Landmark map — extended vs. the squat-only prototype to also
-//  cover elbow/wrist (needed by Bicep Curl / Jumping Jack).
-// ─────────────────────────────────────────────────────────────
-const LM = {
-  left_ear: 7, right_ear: 8,
-  left_shoulder: 11, right_shoulder: 12,
-  left_elbow: 13, right_elbow: 14,
-  left_wrist: 15, right_wrist: 16,
-  left_hip: 23, right_hip: 24,
-  left_knee: 25, right_knee: 26,
-  left_ankle: 27, right_ankle: 28,
-  left_heel: 29, right_heel: 30,
-  left_foot_index: 31, right_foot_index: 32,
-};
-
-const POSE_CONNECTIONS = [
-  [11,12],[11,23],[12,24],[23,24],
-  [11,13],[13,15],[12,14],[14,16],
-  [23,25],[25,27],[27,31],[27,29],
-  [24,26],[26,28],[28,32],[28,30],
-];
-
-// ─────────────────────────────────────────────────────────────
-//  DOM refs
-// ─────────────────────────────────────────────────────────────
-const startScreen = document.getElementById("startScreen");
-const startBtn = document.getElementById("startBtn");
-const stage = document.getElementById("stage");
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const fpsPill = document.getElementById("fpsPill");
-const flipBtn = document.getElementById("flipBtn");
-const statusEl = document.getElementById("status");
-const rotatePrompt = document.getElementById("rotatePrompt");
-const rotateMsg = document.getElementById("rotateMsg");
-const restScreen = document.getElementById("restScreen");
-const restTitle = document.getElementById("restTitle");
-const nextSetBtn = document.getElementById("nextSetBtn");
-const doneScreen = document.getElementById("doneScreen");
-const doneSummary = document.getElementById("doneSummary");
-const restartBtn = document.getElementById("restartBtn");
-const exerciseGrid = document.getElementById("exerciseGrid");
-const hintText = document.getElementById("hintText");
-
-const targetRepsInput = document.getElementById("targetRepsInput");
-const targetSetsInput = document.getElementById("targetSetsInput");
-
-let TARGET_REPS = 10;
-let TARGET_SETS = 3;
-let currentSet = 1;
-
-let facingMode = "user";
-
-// ─────────────────────────────────────────────────────────────
-//  Geometry helpers (unchanged from the squat prototype)
-// ─────────────────────────────────────────────────────────────
-function isPortrait() { return window.innerHeight >= window.innerWidth; }
-function px(landmarks, name, w, h) { const l = landmarks[LM[name]]; return [l.x * w, l.y * h]; }
-function visibility(landmarks, name) { const l = landmarks[LM[name]]; return l.visibility ?? 1.0; }
-function angleBetween(a, b, c) {
-  const ba = [a[0]-b[0], a[1]-b[1]];
-  const bc = [c[0]-b[0], c[1]-b[1]];
-  const dot = ba[0]*bc[0] + ba[1]*bc[1];
-  const magBa = Math.hypot(ba[0], ba[1]);
-  const magBc = Math.hypot(bc[0], bc[1]);
-  const cos = Math.min(1, Math.max(-1, dot / (magBa*magBc + 1e-6)));
-  return Math.acos(cos) * (180/Math.PI);
-}
-function computeAngle(landmarks, p1, p2, p3, w, h) {
-  return angleBetween(px(landmarks,p1,w,h), px(landmarks,p2,w,h), px(landmarks,p3,w,h));
-}
-function dist(a, b) { return Math.hypot(a[0]-b[0], a[1]-b[1]); }
-function maxVis(lm, name) { return Math.max(visibility(lm, "left_"+name), visibility(lm, "right_"+name)); }
-
-// ─────────────────────────────────────────────────────────────
-//  Exercise definitions
-//
-//  All 28 exercise classes now live in ./exercise/*.js and are pulled
-//  in as a single module import (see top of file: `import { Exercises }
-//  from "./exercise/index.js"`). Each mirrors exercises/definitions.py's
-//  shape:
-//    computeAngles(lm,w,h)      -> dict of angle/ratio values
-//    getFsmState(a)             -> "up"/"down"/"mid" etc, sets reached* flags
-//    shouldCount()              -> debounced completion check
-//    checkFormErrors(a)         -> LIVE per-frame cues (voice/HUD), also
-//                                  updates a small named per-rep tracker,
-//                                  reset exactly at the FSM's cycle boundary
-//                                  (Section 30's "small named trackers"
-//                                  pattern — NOT the generic accumulator
-//                                  that caused stale-carryover bugs)
-//    getRepQualityErrors()      -> called once at the counting frame,
-//                                  returns the rep's worst tracked fault
-//                                  (or null) and resets the tracker
-//    checkStartPosture(lm,w,h)  -> calibration gate
-//    getCalibrationChecks()     -> ordered list, first failing wins
-//    trackedLandmarks           -> joints (no side prefix) this exercise's
-//                                  angle math depends on, used for the
-//                                  WORKING-phase visibility gate
-// ─────────────────────────────────────────────────────────────
+  <script type="module">
+    import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+    import { Exercises } from "./exercise/index.js";
+    import { initAskCoach } from "./js/ask-coach.js";
 
 
-// ─────────────────────────────────────────────────────────────
-//  CATEGORY DIVISION — muscle-group tagging for all 28 exercises
-//  built so far (original 18 + Phase 1's 2 + Phase 2's 5 + Phase 3's 3).
-//
-//  Kept as a standalone lookup table rather than adding a `static
-//  category` field to every exercise class — avoids re-touching
-//  already-delivered code, and gives the future equipment-scan UI
-//  (QR -> equipment -> exercise list) one single place to read from
-//  regardless of how that UI ends up querying it.
-//
-//  This is muscle-group category only. Equipment-to-exercise mapping
-//  (which exercises a scanned dumbbell/barbell/machine unlocks) is a
-//  separate table for later, not built here — scoped out per this
-//  session's direction.
-// ─────────────────────────────────────────────────────────────
-const EXERCISE_CATEGORIES = {
-  // Original 18
-  squat: "legs",
-  push_up: "chest",
-  bicep_curl: "arms",
-  hammer_curl: "arms",
-  shoulder_press: "shoulders",
-  lateral_raise: "shoulders",
-  lunge: "legs",
-  side_lunge: "legs",
-  deadlift: "back",
-  glute_bridge: "glutes",
-  calf_raise: "legs",
-  leg_raise: "core",
-  plank: "core",
-  wall_sit: "legs",
-  jumping_jack: "full_body",
-  high_knees: "full_body",
-  mountain_climber: "core",
-  tricep_dip: "arms",
-  // Phase 1
-  bench_press: "chest",
-  bent_over_row: "back",
-  // Phase 2
-  fly: "chest",
-  front_raise: "shoulders",
-  rear_delt_fly: "shoulders",
-  overhead_tricep_extension: "arms",
-  tricep_kickback: "arms",
-  // Phase 3
-  lat_pulldown: "back",
-  sit_up: "core",
-  russian_twist: "core",
-};
+    // ─────────────────────────────────────────────────────────────
+    //  Landmark map — extended vs. the squat-only prototype to also
+    //  cover elbow/wrist (needed by Bicep Curl / Jumping Jack).
+    // ─────────────────────────────────────────────────────────────
+    const LM = {
+      left_ear: 7, right_ear: 8,
+      left_shoulder: 11, right_shoulder: 12,
+      left_elbow: 13, right_elbow: 14,
+      left_wrist: 15, right_wrist: 16,
+      left_hip: 23, right_hip: 24,
+      left_knee: 25, right_knee: 26,
+      left_ankle: 27, right_ankle: 28,
+      left_heel: 29, right_heel: 30,
+      left_foot_index: 31, right_foot_index: 32,
+    };
 
-// Helper: returns an array of exercise keys for a given category,
-// e.g. getExercisesByCategory("legs") -> ["squat", "lunge", ...].
-// Filters against the live EXERCISES registry so it never returns a
-// key that isn't actually registered (protects against this table
-// drifting out of sync with EXERCISES over time).
-function getExercisesByCategory(category) {
-  return Object.keys(EXERCISE_CATEGORIES).filter(
-    key => EXERCISE_CATEGORIES[key] === category && EXERCISES[key]
-  );
-}
+    const POSE_CONNECTIONS = [
+      [11, 12], [11, 23], [12, 24], [23, 24],
+      [11, 13], [13, 15], [12, 14], [14, 16],
+      [23, 25], [25, 27], [27, 31], [27, 29],
+      [24, 26], [26, 28], [28, 32], [28, 30],
+    ];
 
-// Helper: returns the sorted list of distinct categories present,
-// useful for building a category filter UI (tabs/pills) dynamically
-// instead of hardcoding the category names in the UI layer.
-function getAllCategories() {
-  return [...new Set(Object.values(EXERCISE_CATEGORIES))].sort();
-}
+    // ─────────────────────────────────────────────────────────────
+    //  DOM refs
+    // ─────────────────────────────────────────────────────────────
+    const startScreen = document.getElementById("startScreen");
+    const startBtn = document.getElementById("startBtn");
+    const stage = document.getElementById("stage");
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const fpsPill = document.getElementById("fpsPill");
+    const flipBtn = document.getElementById("flipBtn");
+    const statusEl = document.getElementById("status");
+    const rotatePrompt = document.getElementById("rotatePrompt");
+    const rotateMsg = document.getElementById("rotateMsg");
+    const restScreen = document.getElementById("restScreen");
+    const restTitle = document.getElementById("restTitle");
+    const nextSetBtn = document.getElementById("nextSetBtn");
+    const doneScreen = document.getElementById("doneScreen");
+    const doneSummary = document.getElementById("doneSummary");
+    const restartBtn = document.getElementById("restartBtn");
+    const exerciseGrid = document.getElementById("exerciseGrid");
+    const hintText = document.getElementById("hintText");
 
-// Pulled in from ./exercise/index.js — 28 keys, matches EXERCISE_CATEGORIES
-// above exactly. Previously this was a hand-written literal here that only
-// had 25 entries (missing lat_pulldown, sit_up, russian_twist).
-const EXERCISES = Exercises;
+    const targetRepsInput = document.getElementById("targetRepsInput");
+    const targetSetsInput = document.getElementById("targetSetsInput");
 
+    let TARGET_REPS = 10;
+    let TARGET_SETS = 3;
+    let currentSet = 1;
 
-let SELECTED_EXERCISE = "squat";
+    let facingMode = "user";
 
-// Build exercise selector pills
-for (const key of Object.keys(EXERCISES)) {
-  const cls = EXERCISES[key];
-  const pill = document.createElement("div");
-  pill.className = "ex-pill" + (key === SELECTED_EXERCISE ? " selected" : "");
-  pill.textContent = cls.displayName;
-  pill.dataset.key = key;
-  pill.addEventListener("click", () => {
-    SELECTED_EXERCISE = key;
-    document.querySelectorAll(".ex-pill").forEach(p => p.classList.remove("selected"));
-    pill.classList.add("selected");
-    const orient = EXERCISES[key].orientation;
-    if (orient === "portrait")
-      hintText.textContent = "Point the phone upright so your full body is visible, feet to head, facing the camera.";
-    else if (orient === "landscape")
-      hintText.textContent = "Rotate the phone to landscape for a clear side-view of your body.";
-    else
-      hintText.textContent = "Position the phone so your full body is visible (lying or side view is fine).";
-  });
-  exerciseGrid.appendChild(pill);
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Voice
-// ─────────────────────────────────────────────────────────────
-const voice = {
-  lastMsg: "",
-  lastTime: 0,
-  cooldown: 3000,
-  currentSource: null, // "coach" while an Ask Coach reply is playing, else null
-  speak(text, priority = false, source = "form") {
-    try {
-      const now = Date.now();
-      if (!priority && text === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
-      if (!priority && (now - this.lastTime) < 800) return;
-      if (!window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.05;
-      u.onstart = () => { this.currentSource = source; };
-      u.onend = () => { if (this.currentSource === source) this.currentSource = null; };
-      window.speechSynthesis.speak(u);
-      this.lastMsg = text;
-      this.lastTime = now;
-    } 
-    catch (e) {
-      console.warn("TTS failed", e);
+    // ─────────────────────────────────────────────────────────────
+    //  Geometry helpers (unchanged from the squat prototype)
+    // ─────────────────────────────────────────────────────────────
+    function isPortrait() { return window.innerHeight >= window.innerWidth; }
+    function px(landmarks, name, w, h) { const l = landmarks[LM[name]]; return [l.x * w, l.y * h]; }
+    function visibility(landmarks, name) { const l = landmarks[LM[name]]; return l.visibility ?? 1.0; }
+    function angleBetween(a, b, c) {
+      const ba = [a[0] - b[0], a[1] - b[1]];
+      const bc = [c[0] - b[0], c[1] - b[1]];
+      const dot = ba[0] * bc[0] + ba[1] * bc[1];
+      const magBa = Math.hypot(ba[0], ba[1]);
+      const magBc = Math.hypot(bc[0], bc[1]);
+      const cos = Math.min(1, Math.max(-1, dot / (magBa * magBc + 1e-6)));
+      return Math.acos(cos) * (180 / Math.PI);
     }
-  }
-};
-
-// ─────────────────────────────────────────────────────────────
-//  Engine state
-// ─────────────────────────────────────────────────────────────
-const CAL_DURATION_DEFAULT = 2.0;
-let phase = "CALIBRATING"; // CALIBRATING | WORKING | REST | DONE
-let repCount = 0;
-let repQualityLog = []; // session-local: {exercise, set, tier, t} — feeds the post-session summary later
-function logRepQuality(tier) {
-  repQualityLog.push({ exercise: ex.constructor.key, set: currentSet, tier, t: Date.now() });
-}
-let totalRepsCompleted = 0;
-let formErrors = [];
-let feedbackZone = "RED";
-let calFailedIds = {};
-let calActiveId = null;
-let coreWasVisible = true;
-
-let ex = new EXERCISES[SELECTED_EXERCISE]();
-
-// Section 46 item 5: built once per push-to-talk press, not polled.
-let recentFormErrorLog = [];
-function logFormError(msg) {
-  if (recentFormErrorLog[recentFormErrorLog.length - 1] === msg) return;
-  recentFormErrorLog.push(msg);
-  if (recentFormErrorLog.length > 3) recentFormErrorLog.shift();
-}
-
-window.buildSessionSnapshot = function () {
-  return {
-    exercise: ex.constructor.displayName,
-    set: currentSet,
-    reps: repCount,
-    targetReps: TARGET_REPS,
-    targetSets: TARGET_SETS,
-    phase,
-    recentFormErrors: recentFormErrorLog,
-    lastCue: voice.lastMsg || "",
-  };
-};
-
-// ask-coach.js is a separate ES module — it can't see this file's
-// module-scoped `const voice`, so expose it the same way as
-// buildSessionSnapshot above.
-window.voice = voice;
-
-
-function coreVisible(lm) {
-  return visibility(lm,"left_shoulder") > 0.4 && visibility(lm,"right_shoulder") > 0.4 &&
-         visibility(lm,"left_hip") > 0.4 && visibility(lm,"right_hip") > 0.4;
-}
-
-// Exercise-specific WORKING-phase visibility gate — averaged threshold
-// across the exercise's own declared joints, mirroring
-// ExerciseEngine._working_visible() in core/engine.py (Section 32 item 3 /
-// Section 29 bug #4-#5: coreVisible() alone isn't enough for exercises that
-// depend on knees/ankles/elbows/wrists; a strict AND-of-all-joints gate is
-// too fragile against normal per-frame confidence noise, hence averaging).
-function workingVisible(lm) {
-  const joints = ex.constructor.trackedLandmarks || [];
-  if (!joints.length) return true;
-  const scores = joints.map(j => maxVis(lm, j));
-  const avg = scores.reduce((a,b) => a+b, 0) / scores.length;
-  return avg > 0.35;
-}
-
-function runCalibrationChecks(lm, w, h) {
-  const checks = ex.getCalibrationChecks();
-  for (const chk of checks) {
-    const ok = chk.check(lm, w, h);
-    if (!ok) {
-      calFailedIds[chk.id] = true;
-      if (calActiveId !== chk.id) {
-        voice.speak(chk.message, true);
-        calActiveId = chk.id;
-      }
-      return chk;
-    } else {
-      calFailedIds[chk.id] = false;
+    function computeAngle(landmarks, p1, p2, p3, w, h) {
+      return angleBetween(px(landmarks, p1, w, h), px(landmarks, p2, w, h), px(landmarks, p3, w, h));
     }
-  }
-  calActiveId = null;
-  return null;
-}
+    function dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+    function maxVis(lm, name) { return Math.max(visibility(lm, "left_" + name), visibility(lm, "right_" + name)); }
 
-let uiState = {
-  message: "", calRemaining: CAL_DURATION_DEFAULT, calTotal: CAL_DURATION_DEFAULT,
-  repRejected: false, formScore: 100,
-};
+    // ─────────────────────────────────────────────────────────────
+    //  Exercise definitions
+    //
+    //  All 28 exercise classes now live in ./exercise/*.js and are pulled
+    //  in as a single module import (see top of file: `import { Exercises }
+    //  from "./exercise/index.js"`). Each mirrors exercises/definitions.py's
+    //  shape:
+    //    computeAngles(lm,w,h)      -> dict of angle/ratio values
+    //    getFsmState(a)             -> "up"/"down"/"mid" etc, sets reached* flags
+    //    shouldCount()              -> debounced completion check
+    //    checkFormErrors(a)         -> LIVE per-frame cues (voice/HUD), also
+    //                                  updates a small named per-rep tracker,
+    //                                  reset exactly at the FSM's cycle boundary
+    //                                  (Section 30's "small named trackers"
+    //                                  pattern — NOT the generic accumulator
+    //                                  that caused stale-carryover bugs)
+    //    getRepQualityErrors()      -> called once at the counting frame,
+    //                                  returns the rep's worst tracked fault
+    //                                  (or null) and resets the tracker
+    //    checkStartPosture(lm,w,h)  -> calibration gate
+    //    getCalibrationChecks()     -> ordered list, first failing wins
+    //    trackedLandmarks           -> joints (no side prefix) this exercise's
+    //                                  angle math depends on, used for the
+    //                                  WORKING-phase visibility gate
+    // ─────────────────────────────────────────────────────────────
 
-// Debug readout — shows live angle values + FSM flags so thresholds can be
-// tuned against real camera framing instead of guessed at. Toggle off by
-// setting DEBUG_OVERLAY = false once thresholds are confirmed good.
-const DEBUG_OVERLAY = true;
-let lastAngles = {};
 
-// Calibration hold tracking (per current exercise instance)
-let calStart = null;
-let isCalibrated = false;
+    // ─────────────────────────────────────────────────────────────
+    //  CATEGORY DIVISION — muscle-group tagging for all 28 exercises
+    //  built so far (original 18 + Phase 1's 2 + Phase 2's 5 + Phase 3's 3).
+    //
+    //  Kept as a standalone lookup table rather than adding a `static
+    //  category` field to every exercise class — avoids re-touching
+    //  already-delivered code, and gives the future equipment-scan UI
+    //  (QR -> equipment -> exercise list) one single place to read from
+    //  regardless of how that UI ends up querying it.
+    //
+    //  This is muscle-group category only. Equipment-to-exercise mapping
+    //  (which exercises a scanned dumbbell/barbell/machine unlocks) is a
+    //  separate table for later, not built here — scoped out per this
+    //  session's direction.
+    // ─────────────────────────────────────────────────────────────
+    const EXERCISE_CATEGORIES = {
+      // Original 18
+      squat: "legs",
+      push_up: "chest",
+      bicep_curl: "arms",
+      hammer_curl: "arms",
+      shoulder_press: "shoulders",
+      lateral_raise: "shoulders",
+      lunge: "legs",
+      side_lunge: "legs",
+      deadlift: "back",
+      glute_bridge: "glutes",
+      calf_raise: "legs",
+      leg_raise: "core",
+      plank: "core",
+      wall_sit: "legs",
+      jumping_jack: "full_body",
+      high_knees: "full_body",
+      mountain_climber: "core",
+      tricep_dip: "arms",
+      // Phase 1
+      bench_press: "chest",
+      bent_over_row: "back",
+      // Phase 2
+      fly: "chest",
+      front_raise: "shoulders",
+      rear_delt_fly: "shoulders",
+      overhead_tricep_extension: "arms",
+      tricep_kickback: "arms",
+      // Phase 3
+      lat_pulldown: "back",
+      sit_up: "core",
+      russian_twist: "core",
+    };
 
-function checkCalibrationHold(lm, w, h, timestamp) {
-  if (isCalibrated) return uiState.calTotal;
-  if (ex.checkStartPosture(lm, w, h)) {
-    if (calStart === null) calStart = timestamp;
-    const held = timestamp - calStart;
-    if (held >= uiState.calTotal) isCalibrated = true;
-    return held;
-  } else {
-    calStart = null;
-    return 0;
-  }
-}
-
-function processFrame(lm, w, h, timestamp) {
-  formErrors = [];
-  uiState.repRejected = false;
-
-  if (!coreVisible(lm)) {
-    feedbackZone = "RED";
-    uiState.message = "Step into frame — I can't see you clearly.";
-    if (coreWasVisible) { voice.speak("Correct your position.", true); coreWasVisible = false; }
-    return;
-  }
-  coreWasVisible = true;
-
-  if (phase === "CALIBRATING") {
-    const failing = runCalibrationChecks(lm, w, h);
-    if (failing === null) {
-      const held = checkCalibrationHold(lm, w, h, timestamp);
-      uiState.calRemaining = Math.max(0, uiState.calTotal - held);
-      uiState.message = held > 0 ? `Hold still... ${uiState.calRemaining.toFixed(1)}s` : "Hold the position!";
-      feedbackZone = "YELLOW";
-    } else {
-      uiState.calRemaining = uiState.calTotal;
-      uiState.message = failing.message;
-      feedbackZone = "YELLOW";
+    // Helper: returns an array of exercise keys for a given category,
+    // e.g. getExercisesByCategory("legs") -> ["squat", "lunge", ...].
+    // Filters against the live EXERCISES registry so it never returns a
+    // key that isn't actually registered (protects against this table
+    // drifting out of sync with EXERCISES over time).
+    function getExercisesByCategory(category) {
+      return Object.keys(EXERCISE_CATEGORIES).filter(
+        key => EXERCISE_CATEGORIES[key] === category && EXERCISES[key]
+      );
     }
-    if (isCalibrated) {
-      phase = "WORKING";
-      voice.speak(`Go! Set ${currentSet}, start your ${ex.constructor.displayName}.`, true);
+
+    // Helper: returns the sorted list of distinct categories present,
+    // useful for building a category filter UI (tabs/pills) dynamically
+    // instead of hardcoding the category names in the UI layer.
+    function getAllCategories() {
+      return [...new Set(Object.values(EXERCISE_CATEGORIES))].sort();
     }
-    return;
-  }
 
-  if (phase === "WORKING") {
-    if (!workingVisible(lm)) {
-      feedbackZone = "YELLOW";
-      uiState.message = "Keep your tracked joints in frame.";
-      formErrors = [];
-      return;
+    // Pulled in from ./exercise/index.js — 28 keys, matches EXERCISE_CATEGORIES
+    // above exactly. Previously this was a hand-written literal here that only
+    // had 25 entries (missing lat_pulldown, sit_up, russian_twist).
+    const EXERCISES = Exercises;
+
+
+    let SELECTED_EXERCISE = "squat";
+
+    // Build exercise selector pills
+    for (const key of Object.keys(EXERCISES)) {
+      const cls = EXERCISES[key];
+      const pill = document.createElement("div");
+      pill.className = "ex-pill" + (key === SELECTED_EXERCISE ? " selected" : "");
+      pill.textContent = cls.displayName;
+      pill.dataset.key = key;
+      pill.addEventListener("click", () => {
+        SELECTED_EXERCISE = key;
+        document.querySelectorAll(".ex-pill").forEach(p => p.classList.remove("selected"));
+        pill.classList.add("selected");
+        const orient = EXERCISES[key].orientation;
+        if (orient === "portrait")
+          hintText.textContent = "Point the phone upright so your full body is visible, feet to head, facing the camera.";
+        else if (orient === "landscape")
+          hintText.textContent = "Rotate the phone to landscape for a clear side-view of your body.";
+        else
+          hintText.textContent = "Position the phone so your full body is visible (lying or side view is fine).";
+      });
+      exerciseGrid.appendChild(pill);
     }
-    // Duration exercises (plank / wall sit) need wall-clock for hold timing
-    if (ex.constructor.isDurationBased) ex._currentTime = timestamp;
-    // Calf raise adapts baseline only after calibration completes
-    if (ex.constructor.key === "calf_raise") ex.isCalibrated = true;
 
-    const a = ex.computeAngles(lm, w, h);
-    lastAngles = a;
-    ex.prevState = ex.currentState;
-    ex.currentState = ex.getFsmState(a);
-
-    // Some exercises (lateral raise, lunge) need landmarks for form checks
-    const errs = ex.checkFormErrors.length > 1
-      ? ex.checkFormErrors(a, lm, w, h)
-      : ex.checkFormErrors(a);
-    formErrors = errs;
-    uiState.formScore = Math.max(0, 100 - errs.length * 20);
-    feedbackZone = errs.length ? "YELLOW" : "GREEN";
-
-
-    if (ex.shouldCount()) {
-      // Quality is graded now, not a reject/accept gate — any completed
-      // rep counts. getRepQualityErrors() may return {tier, message, speech}
-      // (new exercises) or the old null/object shape (not-yet-migrated
-      // exercises) — normalized below so nothing else needs touching yet.
-      const raw = ex.getRepQualityErrors ? ex.getRepQualityErrors() : null;
-      const quality = (raw && raw.tier) ? raw : { tier: raw ? "poor" : "good", message: raw?.message, speech: raw?.speech };
-
-      const dt = timestamp - ex.lastCountTime;
-      if (dt >= ex.constructor.minRepDuration) {
-        ex.lastCountTime = timestamp;
-        repCount += 1;
-        totalRepsCompleted += 1;
-        logRepQuality(quality.tier); // logged only, never spoken
-
-        if (quality.tier === "good" || !quality.speech) {
-          voice.speak(`Rep ${repCount}`, false);
-        } else {
-          voice.speak(quality.speech, false); // informational, not a rejection
+    // ─────────────────────────────────────────────────────────────
+    //  Voice
+    // ─────────────────────────────────────────────────────────────
+    const voice = {
+      lastMsg: "",
+      lastTime: 0,
+      cooldown: 3000,
+      currentSource: null, // "coach" while an Ask Coach reply is playing, else null
+      speak(text, priority = false, source = "form") {
+        try {
+          const now = Date.now();
+          if (!priority && text === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
+          if (!priority && (now - this.lastTime) < 800) return;
+          if (!window.speechSynthesis) return;
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(text);
+          u.rate = 1.05;
+          u.onstart = () => { this.currentSource = source; };
+          u.onend = () => { if (this.currentSource === source) this.currentSource = null; };
+          window.speechSynthesis.speak(u);
+          this.lastMsg = text;
+          this.lastTime = now;
         }
-        uiState.repRejected = false;
+        catch (e) {
+          console.warn("TTS failed", e);
+        }
+      }
+    };
 
-        if (repCount >= TARGET_REPS) {
-          if (currentSet < TARGET_SETS) {
-            phase = "REST";
-            restTitle.textContent = `Set ${currentSet} Complete!`;
-            nextSetBtn.textContent = `Start Set ${currentSet + 1}`;
-            restScreen.classList.add("show");
-            voice.speak(`Set ${currentSet} complete! Take a rest.`, true);
-          } else {
-            phase = "DONE";
-            doneSummary.textContent = `Completed ${TARGET_SETS} sets · Total ${totalRepsCompleted} reps!`;
-            doneScreen.classList.add("show");
-            voice.speak("Workout complete! Great job!", true);
+    // ─────────────────────────────────────────────────────────────
+    //  Engine state
+    // ─────────────────────────────────────────────────────────────
+    const CAL_DURATION_DEFAULT = 2.0;
+    let phase = "CALIBRATING"; // CALIBRATING | WORKING | REST | DONE
+    let repCount = 0;
+    let repQualityLog = []; // session-local: {exercise, set, tier, t} — feeds the post-session summary later
+    function logRepQuality(tier) {
+      repQualityLog.push({ exercise: ex.constructor.key, set: currentSet, tier, t: Date.now() });
+    }
+    let totalRepsCompleted = 0;
+    let formErrors = [];
+    let feedbackZone = "RED";
+    let calFailedIds = {};
+    let calActiveId = null;
+    let coreWasVisible = true;
+
+    let ex = new EXERCISES[SELECTED_EXERCISE]();
+
+    // Section 46 item 5: built once per push-to-talk press, not polled.
+    let recentFormErrorLog = [];
+    function logFormError(msg) {
+      if (recentFormErrorLog[recentFormErrorLog.length - 1] === msg) return;
+      recentFormErrorLog.push(msg);
+      if (recentFormErrorLog.length > 3) recentFormErrorLog.shift();
+    }
+
+    window.buildSessionSnapshot = function () {
+      return {
+        exercise: ex.constructor.displayName,
+        set: currentSet,
+        reps: repCount,
+        targetReps: TARGET_REPS,
+        targetSets: TARGET_SETS,
+        phase,
+        recentFormErrors: recentFormErrorLog,
+        lastCue: voice.lastMsg || "",
+      };
+    };
+
+    // ask-coach.js is a separate ES module — it can't see this file's
+    // module-scoped `const voice`, so expose it the same way as
+    // buildSessionSnapshot above.
+    window.voice = voice;
+
+
+    function coreVisible(lm) {
+      return visibility(lm, "left_shoulder") > 0.4 && visibility(lm, "right_shoulder") > 0.4 &&
+        visibility(lm, "left_hip") > 0.4 && visibility(lm, "right_hip") > 0.4;
+    }
+
+    // Exercise-specific WORKING-phase visibility gate — averaged threshold
+    // across the exercise's own declared joints, mirroring
+    // ExerciseEngine._working_visible() in core/engine.py (Section 32 item 3 /
+    // Section 29 bug #4-#5: coreVisible() alone isn't enough for exercises that
+    // depend on knees/ankles/elbows/wrists; a strict AND-of-all-joints gate is
+    // too fragile against normal per-frame confidence noise, hence averaging).
+    function workingVisible(lm) {
+      const joints = ex.constructor.trackedLandmarks || [];
+      if (!joints.length) return true;
+      const scores = joints.map(j => maxVis(lm, j));
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      return avg > 0.35;
+    }
+
+    function runCalibrationChecks(lm, w, h) {
+      const checks = ex.getCalibrationChecks();
+      for (const chk of checks) {
+        const ok = chk.check(lm, w, h);
+        if (!ok) {
+          calFailedIds[chk.id] = true;
+          if (calActiveId !== chk.id) {
+            voice.speak(chk.message, true);
+            calActiveId = chk.id;
+          }
+          return chk;
+        } else {
+          calFailedIds[chk.id] = false;
+        }
+      }
+      calActiveId = null;
+      return null;
+    }
+
+    let uiState = {
+      message: "", calRemaining: CAL_DURATION_DEFAULT, calTotal: CAL_DURATION_DEFAULT,
+      repRejected: false, formScore: 100,
+    };
+
+    // Debug readout — shows live angle values + FSM flags so thresholds can be
+    // tuned against real camera framing instead of guessed at. Toggle off by
+    // setting DEBUG_OVERLAY = false once thresholds are confirmed good.
+    const DEBUG_OVERLAY = true;
+    let lastAngles = {};
+
+    // Calibration hold tracking (per current exercise instance)
+    let calStart = null;
+    let isCalibrated = false;
+
+    function checkCalibrationHold(lm, w, h, timestamp) {
+      if (isCalibrated) return uiState.calTotal;
+      if (ex.checkStartPosture(lm, w, h)) {
+        if (calStart === null) calStart = timestamp;
+        const held = timestamp - calStart;
+        if (held >= uiState.calTotal) isCalibrated = true;
+        return held;
+      } else {
+        calStart = null;
+        return 0;
+      }
+    }
+
+    function processFrame(lm, w, h, timestamp) {
+      formErrors = [];
+      uiState.repRejected = false;
+
+      if (!coreVisible(lm)) {
+        feedbackZone = "RED";
+        uiState.message = "Step into frame — I can't see you clearly.";
+        if (coreWasVisible) { voice.speak("Correct your position.", true); coreWasVisible = false; }
+        return;
+      }
+      coreWasVisible = true;
+
+      if (phase === "CALIBRATING") {
+        const failing = runCalibrationChecks(lm, w, h);
+        if (failing === null) {
+          const held = checkCalibrationHold(lm, w, h, timestamp);
+          uiState.calRemaining = Math.max(0, uiState.calTotal - held);
+          uiState.message = held > 0 ? `Hold still... ${uiState.calRemaining.toFixed(1)}s` : "Hold the position!";
+          feedbackZone = "YELLOW";
+        } else {
+          uiState.calRemaining = uiState.calTotal;
+          uiState.message = failing.message;
+          feedbackZone = "YELLOW";
+        }
+        if (isCalibrated) {
+          phase = "WORKING";
+          voice.speak(`Go! Set ${currentSet}, start your ${ex.constructor.displayName}.`, true);
+        }
+        return;
+      }
+
+      if (phase === "WORKING") {
+        if (!workingVisible(lm)) {
+          feedbackZone = "YELLOW";
+          uiState.message = "Keep your tracked joints in frame.";
+          formErrors = [];
+          return;
+        }
+        // Duration exercises (plank / wall sit) need wall-clock for hold timing
+        if (ex.constructor.isDurationBased) ex._currentTime = timestamp;
+        // Calf raise adapts baseline only after calibration completes
+        if (ex.constructor.key === "calf_raise") ex.isCalibrated = true;
+
+        const a = ex.computeAngles(lm, w, h);
+        lastAngles = a;
+        ex.prevState = ex.currentState;
+        ex.currentState = ex.getFsmState(a);
+
+        // Some exercises (lateral raise, lunge) need landmarks for form checks
+        const errs = ex.checkFormErrors.length > 1
+          ? ex.checkFormErrors(a, lm, w, h)
+          : ex.checkFormErrors(a);
+        formErrors = errs;
+        uiState.formScore = Math.max(0, 100 - errs.length * 20);
+        feedbackZone = errs.length ? "YELLOW" : "GREEN";
+
+
+        if (ex.shouldCount()) {
+          // Quality is graded now, not a reject/accept gate — any completed
+          // rep counts. getRepQualityErrors() may return {tier, message, speech}
+          // (new exercises) or the old null/object shape (not-yet-migrated
+          // exercises) — normalized below so nothing else needs touching yet.
+          const raw = ex.getRepQualityErrors ? ex.getRepQualityErrors() : null;
+          const quality = (raw && raw.tier) ? raw : { tier: raw ? "poor" : "good", message: raw?.message, speech: raw?.speech };
+
+          const dt = timestamp - ex.lastCountTime;
+          if (dt >= ex.constructor.minRepDuration) {
+            ex.lastCountTime = timestamp;
+            repCount += 1;
+            totalRepsCompleted += 1;
+            logRepQuality(quality.tier); // logged only, never spoken
+
+            if (quality.tier === "good" || !quality.speech) {
+              voice.speak(`Rep ${repCount}`, false);
+            } else {
+              voice.speak(quality.speech, false); // informational, not a rejection
+            }
+            uiState.repRejected = false;
+
+            if (repCount >= TARGET_REPS) {
+              if (currentSet < TARGET_SETS) {
+                phase = "REST";
+                restTitle.textContent = `Set ${currentSet} Complete!`;
+                nextSetBtn.textContent = `Start Set ${currentSet + 1}`;
+                restScreen.classList.add("show");
+                voice.speak(`Set ${currentSet} complete! Take a rest.`, true);
+              } else {
+                phase = "DONE";
+                doneSummary.textContent = `Completed ${TARGET_SETS} sets · Total ${totalRepsCompleted} reps!`;
+                doneScreen.classList.add("show");
+                voice.speak("Workout complete! Great job!", true);
+              }
+            }
+          }
+        }
+
+        if (errs.length) voice.speak(errs[0].speech, false);
+        if (errs.length) logFormError(errs[0].message);
+        uiState.message = "";
+        return;
+      }
+    }
+
+    const ZONE_COLOR = { RED: "#dc2828", YELLOW: "#dcdc00", GREEN: "#00dc64" };
+
+    function drawSkeleton(lm, w, h, offsetX = 0, offsetY = 0) {
+      ctx.strokeStyle = "#00e5ff";
+      ctx.lineWidth = 3;
+      for (const [a, b] of POSE_CONNECTIONS) {
+        const p1 = lm[a], p2 = lm[b];
+        if (!p1 || !p2) continue;
+        ctx.beginPath();
+        ctx.moveTo(offsetX + p1.x * w, offsetY + p1.y * h);
+        ctx.lineTo(offsetX + p2.x * w, offsetY + p2.y * h);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#ff9d00";
+      for (const idx of Object.values(LM)) {
+        const p = lm[idx];
+        if (!p) continue;
+        ctx.beginPath();
+        ctx.arc(offsetX + p.x * w, offsetY + p.y * h, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawBorder(w, h) {
+      ctx.strokeStyle = ZONE_COLOR[feedbackZone] || "#888";
+      ctx.lineWidth = 12;
+      ctx.strokeRect(6, 6, w - 12, h - 12);
+    }
+
+    function roundedPanel(x, y, w, h, alpha = 0.65) {
+      ctx.fillStyle = `rgba(20,20,20,${alpha})`;
+      ctx.fillRect(x, y, w, h);
+    }
+
+    function drawHUD(w, h, videoOffsetY = 0) {
+      const displayName = ex.constructor.displayName.toUpperCase();
+      if (phase === "CALIBRATING") {
+        ctx.fillStyle = "#ffd23f";
+        ctx.font = `${Math.round(w * 0.045)}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(`${displayName} — SET ${currentSet}/${TARGET_SETS}`, w / 2, h * 0.08);
+
+        const barW = w * 0.6, barH = h * 0.03, bx = (w - barW) / 2, by = h * 0.85;
+        roundedPanel(bx - 4, by - 4, barW + 8, barH + 8, 0.5);
+        const fill = (1 - uiState.calRemaining / uiState.calTotal) * barW;
+        ctx.fillStyle = "#00dc64";
+        ctx.fillRect(bx, by, Math.max(0, fill), barH);
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx, by, barW, barH);
+
+        ctx.fillStyle = "#ffd23f";
+        ctx.font = `${Math.round(w * 0.032)}px sans-serif`;
+        ctx.fillText(uiState.message, w / 2, by - h * 0.03);
+      } else if (phase === "WORKING") {
+        if (uiState.message) {
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#ffd23f";
+          ctx.font = `bold ${Math.round(w * 0.032)}px sans-serif`;
+          roundedPanel(w * 0.1, h * 0.06, w * 0.8, h * 0.06, 0.6);
+          ctx.fillText(uiState.message, w / 2, h * 0.105);
+        }
+        // Fit the rep/form panel into the black letterbox bar above the video
+        // (videoOffsetY) instead of a fixed 34%-of-screen block that used to
+        // spill down over the person's face. Falls back to the old default
+        // when there's no real letterbox (video fills the screen).
+        const panelW = Math.min(220, w * 0.45);
+        const barH = videoOffsetY > 4 ? videoOffsetY : h * 0.34;
+        const panelH = Math.max(60, Math.min(barH, h * 0.34));
+        // Font sizes scale off panelH (not screen width) so text stays
+        // proportioned to the box even when the box is small.
+        roundedPanel(0, 0, panelW, panelH, 0.68);
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#00e5ff";
+        ctx.font = `${Math.round(panelH * 0.16)}px sans-serif`;
+        ctx.fillText(`${displayName.slice(0, 14)} · SET ${currentSet}/${TARGET_SETS}`, 8, panelH * 0.20);
+
+        ctx.fillStyle = "#999";
+        ctx.font = `${Math.round(panelH * 0.11)}px sans-serif`;
+        ctx.fillText("REPS", 8, panelH * 0.38);
+        ctx.fillStyle = "#fff";
+        ctx.font = `bold ${Math.round(panelH * 0.40)}px sans-serif`;
+        ctx.fillText(String(repCount), 8, panelH * 0.68);
+        ctx.font = `${Math.round(panelH * 0.14)}px sans-serif`;
+        ctx.fillStyle = "#999";
+        ctx.fillText(`/ ${TARGET_REPS}`, panelW * 0.42, panelH * 0.68);
+
+        ctx.fillStyle = "#999";
+        ctx.font = `${Math.round(panelH * 0.11)}px sans-serif`;
+        ctx.fillText("FORM", 8, panelH * 0.84);
+        ctx.fillStyle = uiState.formScore >= 85 ? "#00dc64" : uiState.formScore >= 65 ? "#dcdc00" : "#dc2828";
+        ctx.font = `${Math.round(panelH * 0.16)}px sans-serif`;
+        ctx.fillText(`${uiState.formScore}%`, 8, panelH * 0.97);
+
+        if (uiState.repRejected) {
+          ctx.fillStyle = "#dc2828";
+          ctx.font = `bold ${Math.round(w * 0.03)}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.fillText("NOT COUNTED — FIX FORM", w / 2, h * 0.1);
+        }
+
+        if (formErrors.length) {
+          const msg = "⚠ " + formErrors[0].message;
+          ctx.textAlign = "right";
+          ctx.fillStyle = "#0009";
+          ctx.font = `${Math.round(w * 0.028)}px sans-serif`;
+          const tw = ctx.measureText(msg).width;
+          roundedPanel(w - tw - 24, h * 0.92 - 30, tw + 16, 34, 0.7);
+          ctx.fillStyle = "#ff9d00";
+          ctx.fillText(msg, w - 12, h * 0.92);
+        }
+
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#0f0";
+        ctx.font = `${Math.round(w * 0.03)}px sans-serif`;
+        ctx.fillText((ex.currentState || "").toUpperCase(), w - 12, h - 14);
+
+        if (DEBUG_OVERLAY) {
+          // Live angle values only — right-aligned, top-right, clear of both
+          // the FPS/Flip topbar and the rep panel.
+          const lines = Object.entries(lastAngles).map(
+            ([k, v]) => `${k}: ${typeof v === "number" ? v.toFixed(1) : v}`
+          );
+          ctx.textAlign = "right";
+          ctx.font = `${Math.round(w * 0.024)}px monospace`;
+          let dy = h * 0.16;
+          for (const line of lines) {
+            const tw = ctx.measureText(line).width;
+            ctx.fillStyle = "#0009";
+            ctx.fillRect(w - tw - 20, dy - 14, tw + 12, 20);
+            ctx.fillStyle = "#0ff";
+            ctx.fillText(line, w - 12, dy);
+            dy += 22;
           }
         }
       }
     }
 
-    if (errs.length) voice.speak(errs[0].speech, false);
-    if (errs.length) logFormError(errs[0].message);
-    uiState.message = "";
-    return;
-  }
-}
-
-const ZONE_COLOR = { RED: "#dc2828", YELLOW: "#dcdc00", GREEN: "#00dc64" };
-
-function drawSkeleton(lm, w, h, offsetX=0, offsetY=0) {
-  ctx.strokeStyle = "#00e5ff";
-  ctx.lineWidth = 3;
-  for (const [a,b] of POSE_CONNECTIONS) {
-    const p1 = lm[a], p2 = lm[b];
-    if (!p1 || !p2) continue;
-    ctx.beginPath();
-    ctx.moveTo(offsetX + p1.x*w, offsetY + p1.y*h);
-    ctx.lineTo(offsetX + p2.x*w, offsetY + p2.y*h);
-    ctx.stroke();
-  }
-  ctx.fillStyle = "#ff9d00";
-  for (const idx of Object.values(LM)) {
-    const p = lm[idx];
-    if (!p) continue;
-    ctx.beginPath();
-    ctx.arc(offsetX + p.x*w, offsetY + p.y*h, 5, 0, Math.PI*2);
-    ctx.fill();
-  }
-}
-
-function drawBorder(w, h) {
-  ctx.strokeStyle = ZONE_COLOR[feedbackZone] || "#888";
-  ctx.lineWidth = 12;
-  ctx.strokeRect(6, 6, w-12, h-12);
-}
-
-function roundedPanel(x,y,w,h,alpha=0.65) {
-  ctx.fillStyle = `rgba(20,20,20,${alpha})`;
-  ctx.fillRect(x,y,w,h);
-}
-
-function drawHUD(w, h, videoOffsetY=0) {
-  const displayName = ex.constructor.displayName.toUpperCase();
-  if (phase === "CALIBRATING") {
-    ctx.fillStyle = "#ffd23f";
-    ctx.font = `${Math.round(w*0.045)}px sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText(`${displayName} — SET ${currentSet}/${TARGET_SETS}`, w/2, h*0.08);
-
-    const barW = w*0.6, barH = h*0.03, bx = (w-barW)/2, by = h*0.85;
-    roundedPanel(bx-4, by-4, barW+8, barH+8, 0.5);
-    const fill = (1 - uiState.calRemaining/uiState.calTotal) * barW;
-    ctx.fillStyle = "#00dc64";
-    ctx.fillRect(bx, by, Math.max(0,fill), barH);
-    ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
-    ctx.strokeRect(bx, by, barW, barH);
-
-    ctx.fillStyle = "#ffd23f";
-    ctx.font = `${Math.round(w*0.032)}px sans-serif`;
-    ctx.fillText(uiState.message, w/2, by - h*0.03);
-  } else if (phase === "WORKING") {
-    if (uiState.message) {
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#ffd23f";
-      ctx.font = `bold ${Math.round(w*0.032)}px sans-serif`;
-      roundedPanel(w*0.1, h*0.06, w*0.8, h*0.06, 0.6);
-      ctx.fillText(uiState.message, w/2, h*0.105);
-    }
-    // Fit the rep/form panel into the black letterbox bar above the video
-    // (videoOffsetY) instead of a fixed 34%-of-screen block that used to
-    // spill down over the person's face. Falls back to the old default
-    // when there's no real letterbox (video fills the screen).
-    const panelW = Math.min(220, w*0.45);
-    const barH = videoOffsetY > 4 ? videoOffsetY : h*0.34;
-    const panelH = Math.max(60, Math.min(barH, h*0.34));
-    // Font sizes scale off panelH (not screen width) so text stays
-    // proportioned to the box even when the box is small.
-    roundedPanel(0,0,panelW,panelH, 0.68);
-    ctx.textAlign = "left";
-    ctx.fillStyle = "#00e5ff";
-    ctx.font = `${Math.round(panelH*0.16)}px sans-serif`;
-    ctx.fillText(`${displayName.slice(0,14)} · SET ${currentSet}/${TARGET_SETS}`, 8, panelH*0.20);
-
-    ctx.fillStyle = "#999";
-    ctx.font = `${Math.round(panelH*0.11)}px sans-serif`;
-    ctx.fillText("REPS", 8, panelH*0.38);
-    ctx.fillStyle = "#fff";
-    ctx.font = `bold ${Math.round(panelH*0.40)}px sans-serif`;
-    ctx.fillText(String(repCount), 8, panelH*0.68);
-    ctx.font = `${Math.round(panelH*0.14)}px sans-serif`;
-    ctx.fillStyle = "#999";
-    ctx.fillText(`/ ${TARGET_REPS}`, panelW*0.42, panelH*0.68);
-
-    ctx.fillStyle = "#999";
-    ctx.font = `${Math.round(panelH*0.11)}px sans-serif`;
-    ctx.fillText("FORM", 8, panelH*0.84);
-    ctx.fillStyle = uiState.formScore >= 85 ? "#00dc64" : uiState.formScore >= 65 ? "#dcdc00" : "#dc2828";
-    ctx.font = `${Math.round(panelH*0.16)}px sans-serif`;
-    ctx.fillText(`${uiState.formScore}%`, 8, panelH*0.97);
-
-    if (uiState.repRejected) {
-      ctx.fillStyle = "#dc2828";
-      ctx.font = `bold ${Math.round(w*0.03)}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText("NOT COUNTED — FIX FORM", w/2, h*0.1);
-    }
-
-    if (formErrors.length) {
-      const msg = "⚠ " + formErrors[0].message;
-      ctx.textAlign = "right";
-      ctx.fillStyle = "#0009";
-      ctx.font = `${Math.round(w*0.028)}px sans-serif`;
-      const tw = ctx.measureText(msg).width;
-      roundedPanel(w-tw-24, h*0.92-30, tw+16, 34, 0.7);
-      ctx.fillStyle = "#ff9d00";
-      ctx.fillText(msg, w-12, h*0.92);
-    }
-
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#0f0";
-    ctx.font = `${Math.round(w*0.03)}px sans-serif`;
-    ctx.fillText((ex.currentState||"").toUpperCase(), w-12, h-14);
-
-    if (DEBUG_OVERLAY) {
-      // Live angle values only — right-aligned, top-right, clear of both
-      // the FPS/Flip topbar and the rep panel.
-      const lines = Object.entries(lastAngles).map(
-        ([k, v]) => `${k}: ${typeof v === "number" ? v.toFixed(1) : v}`
-      );
-      ctx.textAlign = "right";
-      ctx.font = `${Math.round(w*0.024)}px monospace`;
-      let dy = h*0.16;
-      for (const line of lines) {
-        const tw = ctx.measureText(line).width;
-        ctx.fillStyle = "#0009";
-        ctx.fillRect(w-tw-20, dy-14, tw+12, 20);
-        ctx.fillStyle = "#0ff";
-        ctx.fillText(line, w-12, dy);
-        dy += 22;
+    // ─────────────────────────────────────────────────────────────
+    //  Orientation handling — per-exercise, some exercises (Leg Raise)
+    //  have no enforced orientation since they're performed lying down.
+    // ─────────────────────────────────────────────────────────────
+    function checkOrientation() {
+      const required = ex.constructor.orientation;
+      if (!required) { rotatePrompt.classList.remove("show"); return; }
+      if (required === "landscape") {
+        rotateMsg.textContent = `${ex.constructor.displayName} needs your phone in LANDSCAPE — rotate it sideways for a clear side-view profile.`;
+      } else {
+        rotateMsg.textContent = `${ex.constructor.displayName} needs your phone in PORTRAIT — rotate it upright and step back so your full body is visible.`;
       }
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Orientation handling — per-exercise, some exercises (Leg Raise)
-//  have no enforced orientation since they're performed lying down.
-// ─────────────────────────────────────────────────────────────
-function checkOrientation() {
-  const required = ex.constructor.orientation;
-  if (!required) { rotatePrompt.classList.remove("show"); return; }
-  if (required === "landscape") {
-    rotateMsg.textContent = `${ex.constructor.displayName} needs your phone in LANDSCAPE — rotate it sideways for a clear side-view profile.`;
-  } else {
-    rotateMsg.textContent = `${ex.constructor.displayName} needs your phone in PORTRAIT — rotate it upright and step back so your full body is visible.`;
-  }
-  const mismatched = (required === "portrait" && !isPortrait()) || (required === "landscape" && isPortrait());
-  rotatePrompt.classList.toggle("show", mismatched);
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Camera / model plumbing (unchanged from squat prototype)
-// ─────────────────────────────────────────────────────────────
-let poseLandmarker = null;
-let running = false;
-let lastVideoTime = -1;
-let fpsCounter = 0, fpsTimer = performance.now();
-let actualResText = "";
-
-async function initModel() {
-  const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
-  poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-      delegate: "GPU",
-    },
-    runningMode: "VIDEO",
-    numPoses: 1,
-  });
-}
-
-async function startCamera() {
-  const screenAspect = window.innerWidth / window.innerHeight;
-  // Request a resolution whose ASPECT RATIO actually matches the screen —
-  // a hardcoded square (960x960) is what caused the huge letterboxing on
-  // a portrait phone. Longest side capped at 1280 to stay fast on
-  // mid-range hardware.
-  const MAX_SIDE = 1280;
-  let idealWidth, idealHeight;
-  if (screenAspect >= 1) {
-    idealWidth = MAX_SIDE;
-    idealHeight = Math.round(MAX_SIDE / screenAspect);
-  } else {
-    idealHeight = MAX_SIDE;
-    idealWidth = Math.round(MAX_SIDE * screenAspect);
-  }
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: {
-      facingMode,
-      aspectRatio: { ideal: screenAspect },
-      width: { ideal: idealWidth },
-      height: { ideal: idealHeight },
-    },
-    audio: false,
-  });
-  video.srcObject = stream;
-  await new Promise(res => { video.onloadedmetadata = () => { video.play(); res(); }; });
-  resizeCanvasToViewport();
-  const track = stream.getVideoTracks()[0];
-  const settings = track.getSettings ? track.getSettings() : {};
-  actualResText = settings.width && settings.height ? `${settings.width}×${settings.height}` : "";
-}
-
-function resizeCanvasToViewport() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  checkOrientation();
-}
-let lastAspectBucket = window.innerWidth >= window.innerHeight ? "landscape" : "portrait";
-window.addEventListener("resize", resizeCanvasToViewport);
-window.addEventListener("orientationchange", () => setTimeout(async () => {
-  resizeCanvasToViewport();
-  const bucket = window.innerWidth >= window.innerHeight ? "landscape" : "portrait";
-  if (running && bucket !== lastAspectBucket) {
-    lastAspectBucket = bucket;
-    // Re-negotiate the camera stream to match the new orientation —
-    // otherwise it keeps its old (now wrong-aspect) resolution forever.
-    stopCamera();
-    await startCamera();
-  }
-}, 200));
-
-
-
-function stopCamera() {
-  const stream = video.srcObject;
-  if (stream) stream.getTracks().forEach(t => t.stop());
-}
-
-function getDrawTransform(canvasW, canvasH, videoW, videoH) {
-  const scale = Math.min(canvasW / videoW, canvasH / videoH);
-  const drawW = videoW * scale, drawH = videoH * scale;
-  const offsetX = (canvasW - drawW) / 2, offsetY = (canvasH - drawH) / 2;
-  return { scale, drawW, drawH, offsetX, offsetY };
-}
-
-function renderLoop() {
-  if (!running) return;
-  const w = canvas.width, h = canvas.height;
-  const vw = video.videoWidth, vh = video.videoHeight;
-  const orientationBlocked = rotatePrompt.classList.contains("show");
-
-  if (!orientationBlocked && phase !== "REST" && phase !== "DONE" && vw && vh && video.currentTime !== lastVideoTime) {
-    lastVideoTime = video.currentTime;
-    const result = poseLandmarker.detectForVideo(video, performance.now());
-    const t = getDrawTransform(w, h, vw, vh);
-
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.save();
-    if (facingMode === "user") {
-      ctx.translate(t.offsetX + t.drawW, t.offsetY);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0, t.drawW, t.drawH);
-    } else {
-      ctx.drawImage(video, t.offsetX, t.offsetY, t.drawW, t.drawH);
-    }
-    ctx.restore();
-
-    if (result.landmarks && result.landmarks.length > 0) {
-      const lmRaw = result.landmarks[0];
-      const lm = facingMode === "user" ? lmRaw.map(p => ({ ...p, x: 1 - p.x })) : lmRaw;
-      processFrame(lm, t.drawW, t.drawH, performance.now()/1000);
-      drawSkeleton(lm, t.drawW, t.drawH, t.offsetX, t.offsetY);
-    } else {
-      feedbackZone = "RED";
-      uiState.message = "No person detected — step into frame.";
+      const mismatched = (required === "portrait" && !isPortrait()) || (required === "landscape" && isPortrait());
+      rotatePrompt.classList.toggle("show", mismatched);
     }
 
-    drawBorder(w, h);
-    drawHUD(w, h, t.offsetY);
+    // ─────────────────────────────────────────────────────────────
+    //  Camera / model plumbing (unchanged from squat prototype)
+    // ─────────────────────────────────────────────────────────────
+    let poseLandmarker = null;
+    let running = false;
+    let lastVideoTime = -1;
+    let fpsCounter = 0, fpsTimer = performance.now();
+    let actualResText = "";
 
-    fpsCounter++;
-    const now = performance.now();
-    if (now - fpsTimer >= 1000) {
-      fpsPill.textContent = `FPS ${fpsCounter}${actualResText ? " · " + actualResText : ""}`;
-      fpsCounter = 0;
-      fpsTimer = now;
+    async function initModel() {
+      const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+      poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+          delegate: "GPU",
+        },
+        runningMode: "VIDEO",
+        numPoses: 1,
+      });
     }
-  }
-  requestAnimationFrame(renderLoop);
-}
 
-startBtn.addEventListener("click", async () => {
-  TARGET_REPS = parseInt(targetRepsInput.value) || 10;
-  TARGET_SETS = parseInt(targetSetsInput.value) || 3;
-  currentSet = 1;
-  repCount = 0;
-  totalRepsCompleted = 0;
+    async function startCamera() {
+      const screenAspect = window.innerWidth / window.innerHeight;
+      // Request a resolution whose ASPECT RATIO actually matches the screen —
+      // a hardcoded square (960x960) is what caused the huge letterboxing on
+      // a portrait phone. Longest side capped at 1280 to stay fast on
+      // mid-range hardware.
+      const MAX_SIDE = 1280;
+      let idealWidth, idealHeight;
+      if (screenAspect >= 1) {
+        idealWidth = MAX_SIDE;
+        idealHeight = Math.round(MAX_SIDE / screenAspect);
+      } else {
+        idealHeight = MAX_SIDE;
+        idealWidth = Math.round(MAX_SIDE * screenAspect);
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode,
+          aspectRatio: { ideal: screenAspect },
+          width: { ideal: idealWidth },
+          height: { ideal: idealHeight },
+        },
+        audio: false,
+      });
+      video.srcObject = stream;
+      await new Promise(res => { video.onloadedmetadata = () => { video.play(); res(); }; });
+      resizeCanvasToViewport();
+      const track = stream.getVideoTracks()[0];
+      const settings = track.getSettings ? track.getSettings() : {};
+      actualResText = settings.width && settings.height ? `${settings.width}×${settings.height}` : "";
+    }
 
-  // Instantiate the chosen exercise fresh
-  ex = new EXERCISES[SELECTED_EXERCISE]();
-  uiState.calTotal = ex.constructor.calibrationDuration;
-  uiState.calRemaining = uiState.calTotal;
-  calStart = null;
-  isCalibrated = false;
-  phase = "CALIBRATING";
-  calFailedIds = {};
-  calActiveId = null;
+    function resizeCanvasToViewport() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      checkOrientation();
+    }
+    let lastAspectBucket = window.innerWidth >= window.innerHeight ? "landscape" : "portrait";
+    window.addEventListener("resize", resizeCanvasToViewport);
+    window.addEventListener("orientationchange", () => setTimeout(async () => {
+      resizeCanvasToViewport();
+      const bucket = window.innerWidth >= window.innerHeight ? "landscape" : "portrait";
+      if (running && bucket !== lastAspectBucket) {
+        lastAspectBucket = bucket;
+        // Re-negotiate the camera stream to match the new orientation —
+        // otherwise it keeps its old (now wrong-aspect) resolution forever.
+        stopCamera();
+        await startCamera();
+      }
+    }, 200));
 
-  startBtn.disabled = true;
-  startBtn.textContent = "Loading model…";
-  try {
-    statusEl.textContent = "Loading MediaPipe model…";
-    await initModel();
-    statusEl.textContent = "Requesting camera…";
-    await startCamera();
-    startScreen.style.display = "none";
-    stage.style.display = "flex";
-    running = true;
-    statusEl.textContent = "";
-    checkOrientation();
-    initAskCoach();
-    requestAnimationFrame(renderLoop);
-  } catch (err) {
-    statusEl.textContent = "Error: " + err.message;
-    startBtn.disabled = false;
-    startBtn.textContent = "Start Camera";
-    console.error(err);
-  }
-});
 
-nextSetBtn.addEventListener("click", () => {
-  currentSet += 1;
-  repCount = 0;
-  restScreen.classList.remove("show");
-  ex.reset();
-  calStart = null;
-  isCalibrated = false;
-  phase = "CALIBRATING";
-  calFailedIds = {};
-  calActiveId = null;
-  voice.speak(`Get ready for set ${currentSet}`, true);
-});
 
-restartBtn.addEventListener("click", () => {
-  doneScreen.classList.remove("show");
-  stage.style.display = "none";
-  startScreen.style.display = "flex";
-  startBtn.disabled = false;
-  startBtn.textContent = "Start Camera";
-  running = false;
-  stopCamera();
-});
+    function stopCamera() {
+      const stream = video.srcObject;
+      if (stream) stream.getTracks().forEach(t => t.stop());
+    }
 
-flipBtn.addEventListener("click", async () => {
-  facingMode = facingMode === "user" ? "environment" : "user";
-  stopCamera();
-  await startCamera();
-});
-</script>
+    function getDrawTransform(canvasW, canvasH, videoW, videoH) {
+      const scale = Math.min(canvasW / videoW, canvasH / videoH);
+      const drawW = videoW * scale, drawH = videoH * scale;
+      const offsetX = (canvasW - drawW) / 2, offsetY = (canvasH - drawH) / 2;
+      return { scale, drawW, drawH, offsetX, offsetY };
+    }
+
+    function renderLoop() {
+      if (!running) return;
+      const w = canvas.width, h = canvas.height;
+      const vw = video.videoWidth, vh = video.videoHeight;
+      const orientationBlocked = rotatePrompt.classList.contains("show");
+
+      if (!orientationBlocked && phase !== "REST" && phase !== "DONE" && vw && vh && video.currentTime !== lastVideoTime) {
+        lastVideoTime = video.currentTime;
+        const result = poseLandmarker.detectForVideo(video, performance.now());
+        const t = getDrawTransform(w, h, vw, vh);
+
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.save();
+        if (facingMode === "user") {
+          ctx.translate(t.offsetX + t.drawW, t.offsetY);
+          ctx.scale(-1, 1);
+          ctx.drawImage(video, 0, 0, t.drawW, t.drawH);
+        } else {
+          ctx.drawImage(video, t.offsetX, t.offsetY, t.drawW, t.drawH);
+        }
+        ctx.restore();
+
+        if (result.landmarks && result.landmarks.length > 0) {
+          const lmRaw = result.landmarks[0];
+          const lm = facingMode === "user" ? lmRaw.map(p => ({ ...p, x: 1 - p.x })) : lmRaw;
+          processFrame(lm, t.drawW, t.drawH, performance.now() / 1000);
+          drawSkeleton(lm, t.drawW, t.drawH, t.offsetX, t.offsetY);
+        } else {
+          feedbackZone = "RED";
+          uiState.message = "No person detected — step into frame.";
+        }
+
+        drawBorder(w, h);
+        drawHUD(w, h, t.offsetY);
+
+        fpsCounter++;
+        const now = performance.now();
+        if (now - fpsTimer >= 1000) {
+          fpsPill.textContent = `FPS ${fpsCounter}${actualResText ? " · " + actualResText : ""}`;
+          fpsCounter = 0;
+          fpsTimer = now;
+        }
+      }
+      requestAnimationFrame(renderLoop);
+    }
+
+    startBtn.addEventListener("click", async () => {
+      TARGET_REPS = parseInt(targetRepsInput.value) || 10;
+      TARGET_SETS = parseInt(targetSetsInput.value) || 3;
+      currentSet = 1;
+      repCount = 0;
+      totalRepsCompleted = 0;
+
+      // Instantiate the chosen exercise fresh
+      ex = new EXERCISES[SELECTED_EXERCISE]();
+      uiState.calTotal = ex.constructor.calibrationDuration;
+      uiState.calRemaining = uiState.calTotal;
+      calStart = null;
+      isCalibrated = false;
+      phase = "CALIBRATING";
+      calFailedIds = {};
+      calActiveId = null;
+
+      startBtn.disabled = true;
+      startBtn.textContent = "Loading model…";
+      try {
+        statusEl.textContent = "Loading MediaPipe model…";
+        await initModel();
+        statusEl.textContent = "Requesting camera…";
+        await startCamera();
+        startScreen.style.display = "none";
+        stage.style.display = "flex";
+        running = true;
+        statusEl.textContent = "";
+        checkOrientation();
+        initAskCoach();
+        requestAnimationFrame(renderLoop);
+      } catch (err) {
+        statusEl.textContent = "Error: " + err.message;
+        startBtn.disabled = false;
+        startBtn.textContent = "Start Camera";
+        console.error(err);
+      }
+    });
+
+    nextSetBtn.addEventListener("click", () => {
+      currentSet += 1;
+      repCount = 0;
+      restScreen.classList.remove("show");
+      ex.reset();
+      calStart = null;
+      isCalibrated = false;
+      phase = "CALIBRATING";
+      calFailedIds = {};
+      calActiveId = null;
+      voice.speak(`Get ready for set ${currentSet}`, true);
+    });
+
+    restartBtn.addEventListener("click", () => {
+      doneScreen.classList.remove("show");
+      stage.style.display = "none";
+      startScreen.style.display = "flex";
+      startBtn.disabled = false;
+      startBtn.textContent = "Start Camera";
+      running = false;
+      stopCamera();
+    });
+
+    flipBtn.addEventListener("click", async () => {
+      facingMode = facingMode === "user" ? "environment" : "user";
+      stopCamera();
+      await startCamera();
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
 </body>
+
 </html>

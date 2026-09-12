@@ -21,7 +21,10 @@ import os
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+import tempfile
+import shutil
+
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from google import genai
@@ -42,7 +45,7 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 # Free-tier-friendly, low-latency model — good fit for short in-session
 # replies spoken aloud mid-set. Override via env if you want a bigger model
 # for the post-session comparison narrative later (Section 46 item 7).
-MODEL_NAME = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+MODEL_NAME = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 
 # Section 43: gym + health + session scope only, short answers, no diagnosis.
 # Section 49: this service never touches MediaPipe/landmarks/video — it only
@@ -87,7 +90,7 @@ ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()] or [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_methods=["POST"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -135,14 +138,15 @@ def build_prompt(req: AskRequest) -> str:
 def ask_coach(req: AskRequest):
     prompt = build_prompt(req)
     try:
-        response = client.models.generate_content(
+        chat = client.chats.create(
             model=MODEL_NAME,
-            contents=f"{SYSTEM_PROMPT}\n\n{prompt}",
             config=genai_types.GenerateContentConfig(
-                max_output_tokens=120,
+                system_instruction=SYSTEM_PROMPT,
+                max_output_tokens=250,
                 temperature=0.4,
-            ),
+            )
         )
+        response = chat.send_message(prompt)
         text = (response.text or "").strip()
         return AskResponse(reply=text or FALLBACK_REPLY)
     except Exception as e:
@@ -150,6 +154,56 @@ def ask_coach(req: AskRequest):
         return AskResponse(reply=FALLBACK_REPLY)
 
 
+# ── Whisper transcription endpoint ───────────────────────────────────────────
+# The phone records audio with MediaRecorder (webm/ogg), POSTs it here as
+# multipart/form-data, and gets back {"text": "..."}.
+# This exists because Web Speech API requires HTTPS — unavailable on a plain
+# LAN http://192.168.x.x URL. Whisper runs locally on the laptop, no cost.
+_whisper_model = None  # lazy-loaded on first request
+
+def _get_whisper():
+    global _whisper_model
+    if _whisper_model is None:
+        try:
+            import os
+            # Force inject winget's ffmpeg into the environment PATH just in case 
+            # Windows failed to update the user's terminal environment correctly.
+            ffmpeg_dir = r"C:\Users\hp\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-full_build\bin"
+            if os.path.exists(ffmpeg_dir) and ffmpeg_dir not in os.environ.get("PATH", ""):
+                os.environ["PATH"] += os.pathsep + ffmpeg_dir
+
+            import whisper
+            print("[transcribe] Loading Whisper 'base' model (one-time, ~140 MB)…")
+            _whisper_model = whisper.load_model("base")
+            print("[transcribe] Whisper ready.")
+        except ImportError:
+            raise RuntimeError(
+                "openai-whisper is not installed. "
+                "Run: pip install openai-whisper"
+            )
+    return _whisper_model
+
+
+@app.post("/transcribe")
+async def transcribe(audio: UploadFile = File(...)):
+    """Receive an audio blob, transcribe with Whisper, return {text}."""
+    suffix = ".webm"  # Chrome/Android records as webm; ffmpeg handles it
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        shutil.copyfileobj(audio.file, tmp)
+        tmp_path = tmp.name
+    try:
+        model = _get_whisper()
+        result = model.transcribe(tmp_path, language="en", fp16=False)
+        text = result.get("text", "").strip()
+        return {"text": text}
+    except Exception as e:
+        print(f"[transcribe] Whisper failed: {e}")
+        return {"text": ""}
+    finally:
+        import os as _os
+        _os.unlink(tmp_path)
+
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": MODEL_NAME}
+    return {"status": "ok", "model": MODEL_NAME}

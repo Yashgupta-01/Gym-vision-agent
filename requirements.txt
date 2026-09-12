@@ -33,3 +33,5 @@ uvicorn[standard]
 pydantic
 python-dotenv
 google-genai          # replaces deprecated google-generativeai
+python-multipart      # required by FastAPI for file/form uploads (/transcribe)
+openai-whisper        # local STT — runs on laptop, phone sends audio blob
