@@ -28,11 +28,11 @@ export class LegExtensionExercise {
   }
 
   getFsmState(a) {
-    // seated: down = knees bent (~90°), up = legs almost straight
-    if (a.knee >= 155) { this.reachedUp = true; return "up"; }
-    if (a.knee <= 105) return "down";
+    if (a.knee >= this.peakKnee || this.peakKnee === undefined) this.peakKnee = a.knee;
+    if (a.knee >= 140) { this.reachedUp = true; return "up"; }  // loosened from 155 — biomechanically unrealistic bar
+    if (a.knee <= 105) { this.peakKnee = 0; return "down"; }
     return "mid";
-  }
+}
 
   shouldCount() {
     if (this.currentState === "down" && this.reachedUp) {
@@ -44,26 +44,17 @@ export class LegExtensionExercise {
 
   checkFormErrors(a) {
     const errors = [];
-    if (this.prevState === "down" && this.currentState !== "down") {
-      this.hadIncompleteLockThisRep = false;
-    }
-    // rushed lockout / incomplete extension
-    if (a.knee >= 130 && a.knee < 155 && this.currentState === "mid" && this.prevState === "up") {
-      this.hadIncompleteLockThisRep = true;
-      errors.push({
-        message: "Full extension",
-        speech: "Fully straighten your legs at the top. Don't cut the rep short.",
-      });
+    if (a.knee >= 105 && a.knee < 140 && this.currentState === "mid" && this.prevState === "up") {
+      errors.push({ message: "Extend further", speech: "Try to straighten a little more at the top." });
     }
     return errors;
-  }
+}
 
   getRepQualityErrors() {
-    const had = this.hadIncompleteLockThisRep;
-    this.hadIncompleteLockThisRep = false;
-    return had
-      ? { message: "Full extension", speech: "Fully straighten your legs at the top. Don't cut the rep short." }
-      : null;
+    const peak = this.peakKnee || 0;
+    if (peak >= 155) return { tier: "good" };
+    if (peak >= 140) return { tier: "ok", message: "Nearly full extension", speech: "Try to straighten a little more next time." };
+    return { tier: "poor", message: "Full extension", speech: "Try to extend a bit further next time." };
   }
 
   checkStartPosture(lm, w, h) {

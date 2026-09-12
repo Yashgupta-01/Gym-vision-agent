@@ -52,7 +52,12 @@ export class PlankExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (a.normHipDev < -0.12) errors.push({ message: "Hips too high", speech: "Lower your hips into a straight plank position." });
+    if (a.normHipDev < -0.12){ 
+      errors.push({ message: "Hips too high", speech: "Lower your hips into a straight plank position." });
+    }
+    else if (a.normHipDev > 0.12){ 
+      errors.push({ message: "Hips sagging", speech: "Engage your core and lift your hips." });
+    }
     if (this.currentState === "hold") {
       this.holdFrames++;
       if (errors.length) this.holdErrorFrames++;

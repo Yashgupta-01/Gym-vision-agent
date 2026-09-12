@@ -76,7 +76,7 @@ export class BentOverRowExercise {
   }
   checkStartPosture(lm, w, h) {
     const a = this.computeAngles(lm, w, h);
-    return a.armPull >= 150 && a.hipHinge >= 45 && a.hipHinge <= 100;
+    return a.armPull >= 140 && a.hipHinge >= 30 && a.hipHinge <= 115;
   }
   getCalibrationChecks() {
     return [

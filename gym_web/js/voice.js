@@ -4,6 +4,7 @@ const voice = {
   cooldown: 3000,
   currentSource: null, // "coach" while an Ask Coach reply is playing, else null
   speak(text, priority = false, source = "form") {
+    if (this.micActive) return;
     try {
       const now = Date.now();
       if (!priority && text === this.lastMsg && (now - this.lastTime) < this.cooldown) return;

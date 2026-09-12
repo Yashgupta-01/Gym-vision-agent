@@ -12,13 +12,23 @@ export class TricepDipExercise {
   constructor() { this.reset(); }
   reset() {
     this.currentState = null; this.prevState = null;
-    this.reachedDown = false; this.hadElbowFlareThisRep = false; this.lastCountTime = 0;
+    this.reachedDown = false; this.lastCountTime = 0;
+    this._lockedSide = null; this.peakFlareRatio = 0;
   }
   _activeSide(lm) {
     const leftVis = (visibility(lm,"left_shoulder")+visibility(lm,"left_elbow")+visibility(lm,"left_wrist"))/3;
     const rightVis = (visibility(lm,"right_shoulder")+visibility(lm,"right_elbow")+visibility(lm,"right_wrist"))/3;
-    return leftVis >= rightVis ? "left" : "right";
-  }
+    const preferred = leftVis >= rightVis ? "left" : "right";
+    if (this._lockedSide === null) { this._lockedSide = preferred; return this._lockedSide; }
+    const currentVis = this._lockedSide === "left" ? leftVis : rightVis;
+    const otherVis = this._lockedSide === "left" ? rightVis : leftVis;
+    // Only switch if the other side is now clearly, meaningfully more
+    // visible — stops frame-to-frame flicker between two similarly-
+    // confident readings, which was silently corrupting the tracked angle.
+    if (otherVis > currentVis + 0.15) this._lockedSide = preferred;
+    return this._lockedSide;
+}
+
   computeAngles(lm, w, h) {
     const side = this._activeSide(lm);
     const elbow = computeAngle(lm, `${side}_shoulder`, `${side}_elbow`, `${side}_wrist`, w, h);
@@ -37,19 +47,21 @@ export class TricepDipExercise {
   }
   checkFormErrors(a) {
     const errors = [];
-    if (this.prevState === "up" && this.currentState !== "up") this.hadElbowFlareThisRep = false;
+    if (this.prevState === "up" && this.currentState !== "up") this.peakFlareRatio = 0;
     if (a.elbow > 95 && a.elbow <= 115 && this.prevState !== "up")
       errors.push({ message: "Dip lower", speech: "Dip lower until your elbows are at a 90-degree angle." });
+    if (a.elbowFlareRatio > this.peakFlareRatio) this.peakFlareRatio = a.elbowFlareRatio;
     if (a.elbowFlareRatio > 0.8) {
-      this.hadElbowFlareThisRep = true;
       errors.push({ message: "Keep elbows tucked", speech: "Keep your elbows tucked back close to your body." });
     }
     return errors;
-  }
+}
   getRepQualityErrors() {
-    const had = this.hadElbowFlareThisRep; this.hadElbowFlareThisRep = false;
-    return had ? { message: "Keep elbows tucked", speech: "Keep your elbows tucked back close to your body." } : null;
-  }
+    const peak = this.peakFlareRatio; this.peakFlareRatio = 0;
+    if (peak <= 0.8) return { tier: "good" };
+    if (peak <= 1.15) return { tier: "ok", message: "Elbows flaring a little", speech: "Try to keep your elbows a touch closer next time." };
+    return { tier: "poor", message: "Keep elbows tucked", speech: "Keep your elbows tucked back close to your body." };
+}
   checkStartPosture(lm, w, h) { return this.computeAngles(lm, w, h).elbow >= 150; }
   getCalibrationChecks() {
     return [

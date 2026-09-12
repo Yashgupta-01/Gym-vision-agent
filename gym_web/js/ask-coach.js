@@ -6,14 +6,13 @@
 //     'message' event.
 //   - Plain browser (this prototype's own testing): Web Speech API.
 // sendToCoach()/the snapshot shape are identical either way — only how the
-// transcript is obtained differs.// below this line (snapshot building, fetch, fallback) is unchanged either way.
+// transcript is obtained differs.
 
-const ASK_COACH_URL = "http://192.168.29.196:8080:8000/ask-coach"; // update once deployed (Section 59 item 7)
+const ASK_COACH_URL = "http://192.168.29.196:8000/ask-coach"; // update once deployed (Section 59 item 7)
 const REQUEST_TIMEOUT_MS = 5000;
 const FALLBACK_REPLY = "Sorry, I couldn't reach the coach just now — keep going, I'll catch up.";
 
 const inNativeWebView = () => !!window.ReactNativeWebView;
-
 
 let recognition = null;
 let listening = false;
@@ -27,8 +26,32 @@ function initRecognition() {
   const rec = new SR();
   rec.lang = "en-US";
   rec.continuous = false;
-  rec.interimResults = false;
+  rec.interimResults = true; // lets the status line show partial speech live
   return rec;
+}
+
+function showBubble(text, cls) {
+  const panel = document.getElementById("coachPanel");
+  if (!panel) return;
+  panel.classList.add("show");
+  const b = document.createElement("div");
+  b.className = "coachBubble " + cls;
+  b.textContent = text;
+  panel.appendChild(b);
+  while (panel.children.length > 5) panel.removeChild(panel.firstChild);
+}
+
+function setStatus(text) {
+  const panel = document.getElementById("coachPanel");
+  if (!panel) return;
+  panel.classList.add("show");
+  let status = panel.querySelector(".coachBubble.status");
+  if (!status) {
+    status = document.createElement("div");
+    status.className = "coachBubble status";
+    panel.appendChild(status);
+  }
+  status.textContent = text;
 }
 
 async function sendToCoach(transcript) {
@@ -89,7 +112,10 @@ export function initAskCoach() {
     try { payload = JSON.parse(event.data); } catch { return; }
     if (payload?.type !== "sttResult" || !payload.transcript) return;
     setMicVisual("thinking");
+    showBubble(payload.transcript, "you");
+    setStatus("Thinking…");
     const reply = await sendToCoach(payload.transcript);
+    showBubble(reply, "coach");
     window.voice.speak(reply, false, "coach");
     setMicVisual("idle");
   });
@@ -101,6 +127,7 @@ export function initAskCoach() {
     // mic — this ordering alone is what prevents the coach's own voice from
     // being re-transcribed as if the member said it.
     window.speechSynthesis.cancel();
+    window.voice.micActive = true;
 
     if (inNativeWebView()) {
       listening = true;
@@ -112,22 +139,43 @@ export function initAskCoach() {
     recognition = initRecognition();
     listening = true;
     setMicVisual("listening");
+    setStatus("Listening…");
 
     recognition.onresult = async (event) => {
-      const transcript = event.results[0][0].transcript;
+      const last = event.results[event.results.length - 1];
+      const transcript = last[0].transcript;
+
+      if (!last.isFinal) {
+        // Partial result — just update the live status line, don't send yet.
+        setStatus(`"${transcript}"`);
+        return;
+      }
+
+      // Final result — this is the one we actually act on.
+      window.voice.micActive = false;
       setMicVisual("thinking");
+      showBubble(transcript, "you");
+      setStatus("Thinking…");
       const reply = await sendToCoach(transcript);
-      // Low priority + tagged "coach" — a live form correction will still
-      // cut this off unconditionally (voice.js's cancel() is unconditional
-      // regardless of this call's own priority flag).
+      showBubble(reply, "coach");
       window.voice.speak(reply, false, "coach");
       setMicVisual("idle");
     };
-    recognition.onerror = () => {
+
+    recognition.onerror = (event) => {
+      window.voice.micActive = false;
       setMicVisual("idle");
       listening = false;
+      const messages = {
+        "no-speech": "Didn't catch that — hold the mic and speak, then release.",
+        "not-allowed": "Microphone is blocked — check site permissions.",
+        "network": "No connection — check your phone's data or WiFi.",
+      };
+      setStatus(messages[event.error] || "Mic error — try again.");
     };
+
     recognition.onend = () => {
+      window.voice.micActive = false;
       listening = false;
       if (btn.classList.contains("mic-listening")) setMicVisual("idle");
     };

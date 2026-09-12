@@ -82,6 +82,18 @@
   #micBtn.mic-listening { background: #dc2828; border-color: #dc2828; }
   #micBtn.mic-thinking { background: #ffd23f; color: #111; }
 
+  #coachPanel {
+    position: absolute; bottom: 70px; left: 12px; right: 12px;
+    z-index: 15; display: none; flex-direction: column; gap: 4px;
+  }
+  #coachPanel.show { display: flex; }
+  .coachBubble {
+    background: rgba(0,0,0,0.75); border-radius: 12px; padding: 8px 12px;
+    font-size: 13px; color: #fff; max-width: 90%; align-self: flex-start;
+  }
+  .coachBubble.you { align-self: flex-end; background: rgba(255,210,63,0.9); color: #111; }
+  .coachBubble.status { align-self: center; background: transparent; color: #999; font-style: italic; }
+
 </style>
 </head>
 <body>
@@ -109,6 +121,7 @@
 <div id="stage" style="display:none;">
   <div id="topbar">
     <div class="pill" id="fpsPill">FPS --</div>
+    <div id="coachPanel"></div>
     <button class="btn" id="micBtn" title="Hold to ask coach">🎤</button>
     <button class="btn" id="flipBtn">⟲ Flip</button>
   </div>
@@ -374,6 +387,10 @@ const voice = {
 const CAL_DURATION_DEFAULT = 2.0;
 let phase = "CALIBRATING"; // CALIBRATING | WORKING | REST | DONE
 let repCount = 0;
+let repQualityLog = []; // session-local: {exercise, set, tier, t} — feeds the post-session summary later
+function logRepQuality(tier) {
+  repQualityLog.push({ exercise: ex.constructor.key, set: currentSet, tier, t: Date.now() });
+}
 let totalRepsCompleted = 0;
 let formErrors = [];
 let feedbackZone = "RED";
@@ -532,36 +549,41 @@ function processFrame(lm, w, h, timestamp) {
     uiState.formScore = Math.max(0, 100 - errs.length * 20);
     feedbackZone = errs.length ? "YELLOW" : "GREEN";
 
+
     if (ex.shouldCount()) {
-      // Always evaluate + reset the named tracker, mirroring
-      // core/engine.py's update(): this must happen regardless of the
-      // debounce outcome below, so a debounced-out attempt doesn't leak
-      // its faults into the next real one.
-      const quality = ex.getRepQualityErrors();
+      // Quality is graded now, not a reject/accept gate — any completed
+      // rep counts. getRepQualityErrors() may return {tier, message, speech}
+      // (new exercises) or the old null/object shape (not-yet-migrated
+      // exercises) — normalized below so nothing else needs touching yet.
+      const raw = ex.getRepQualityErrors ? ex.getRepQualityErrors() : null;
+      const quality = (raw && raw.tier) ? raw : { tier: raw ? "poor" : "good", message: raw?.message, speech: raw?.speech };
 
       const dt = timestamp - ex.lastCountTime;
       if (dt >= ex.constructor.minRepDuration) {
         ex.lastCountTime = timestamp;
-        if (quality) {
-          voice.speak(`Not counted. ${quality.speech}`, true);
-          uiState.repRejected = true;
-        } else {
-          repCount += 1;
-          totalRepsCompleted += 1;
+        repCount += 1;
+        totalRepsCompleted += 1;
+        logRepQuality(quality.tier); // logged only, never spoken
+
+        if (quality.tier === "good" || !quality.speech) {
           voice.speak(`Rep ${repCount}`, false);
-          if (repCount >= TARGET_REPS) {
-            if (currentSet < TARGET_SETS) {
-              phase = "REST";
-              restTitle.textContent = `Set ${currentSet} Complete!`;
-              nextSetBtn.textContent = `Start Set ${currentSet + 1}`;
-              restScreen.classList.add("show");
-              voice.speak(`Set ${currentSet} complete! Take a rest.`, true);
-            } else {
-              phase = "DONE";
-              doneSummary.textContent = `Completed ${TARGET_SETS} sets · Total ${totalRepsCompleted} reps!`;
-              doneScreen.classList.add("show");
-              voice.speak("Workout complete! Great job!", true);
-            }
+        } else {
+          voice.speak(quality.speech, false); // informational, not a rejection
+        }
+        uiState.repRejected = false;
+
+        if (repCount >= TARGET_REPS) {
+          if (currentSet < TARGET_SETS) {
+            phase = "REST";
+            restTitle.textContent = `Set ${currentSet} Complete!`;
+            nextSetBtn.textContent = `Start Set ${currentSet + 1}`;
+            restScreen.classList.add("show");
+            voice.speak(`Set ${currentSet} complete! Take a rest.`, true);
+          } else {
+            phase = "DONE";
+            doneSummary.textContent = `Completed ${TARGET_SETS} sets · Total ${totalRepsCompleted} reps!`;
+            doneScreen.classList.add("show");
+            voice.speak("Workout complete! Great job!", true);
           }
         }
       }
