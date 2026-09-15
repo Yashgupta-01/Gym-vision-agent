@@ -87,9 +87,11 @@
       padding: 10px 14px;
       z-index: 10;
       pointer-events: none;
+      gap: 8px;
     }
 
-    #topbar button {
+    #topbar button,
+    #topbar select {
       pointer-events: auto;
     }
 
@@ -109,6 +111,27 @@
       border-radius: 10px;
       padding: 8px 14px;
       font-size: 14px;
+    }
+
+    #langSelect {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #ffd23f;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    #langSelectStart {
+      background: #161616;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffd23f;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
     }
 
     #startScreen {
@@ -208,7 +231,7 @@
       cursor: pointer;
     }
 
-    #hint {
+    #hintText {
       margin-top: 18px;
       color: #666;
       font-size: 12px;
@@ -280,17 +303,19 @@
 
   <div id="startScreen">
     <h1>GYM VISION AI</h1>
-    <p>Choose an exercise — real-time form check prototype</p>
+    <p id="startSubtitle">Choose an exercise — real-time form check prototype</p>
+
+    <select id="langSelectStart"></select>
 
     <div class="exercise-grid" id="exerciseGrid"></div>
 
     <div class="config-box">
       <div class="config-group">
-        <label>REPS / SET</label>
+        <label id="repsLabel">REPS / SET</label>
         <input type="number" id="targetRepsInput" value="10" min="1" max="50">
       </div>
       <div class="config-group">
-        <label>TOTAL SETS</label>
+        <label id="setsLabel">TOTAL SETS</label>
         <input type="number" id="targetSetsInput" value="3" min="1" max="10">
       </div>
     </div>
@@ -301,6 +326,7 @@
   <div id="stage" style="display:none;">
     <div id="topbar">
       <div class="pill" id="fpsPill">FPS --</div>
+      <select id="langSelect"></select>
       <button class="btn" id="micBtn" title="Hold to ask coach">🎤</button>
       <button class="btn" id="flipBtn">⟲ Flip</button>
     </div>
@@ -309,16 +335,17 @@
     <canvas id="canvas"></canvas>
     <div id="rotatePrompt">
       <div class="icon">📱↕️</div>
-      <p id="rotateMsg">This exercise needs your phone in PORTRAIT — rotate it upright and step back so your full body is visible.</p>
+      <p id="rotateMsg">This exercise needs your phone in PORTRAIT — rotate it upright and step back so your full
+        body is visible.</p>
     </div>
   </div>
   <div id="restScreen">
     <h2 id="restTitle" style="color: #ffd23f; font-size: 24px; margin-bottom: 8px;">Set 1 Complete!</h2>
-    <p style="color: #999; font-size: 14px; margin-bottom: 24px;">Catch your breath before the next set.</p>
+    <p id="restSubtitle" style="color: #999; font-size: 14px; margin-bottom: 24px;">Catch your breath before the next set.</p>
     <button class="primaryBtn" id="nextSetBtn">Start Next Set</button>
   </div>
   <div id="doneScreen">
-    <h2 style="color: #00dc64; font-size: 26px; margin-bottom: 8px;">Workout Complete! 🎉</h2>
+    <h2 id="doneTitle" style="color: #00dc64; font-size: 26px; margin-bottom: 8px;">Workout Complete! 🎉</h2>
     <p id="doneSummary" style="color: #ccc; font-size: 15px; margin-bottom: 24px;"></p>
     <button class="primaryBtn" id="restartBtn">Finish / Restart</button>
   </div>
@@ -329,6 +356,10 @@
     import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
     import { Exercises } from "./exercise/index.js";
     import { initAskCoach } from "./js/ask-coach.js";
+    import {
+      t, tRep, tSetGo, tSetComplete, tRemaining, tGoStart, tGetReady, tExercise,
+      pickVoice, getLang, setLang, SUPPORTED_LANGS
+    } from "./js/i18n.js";
 
 
     // ─────────────────────────────────────────────────────────────
@@ -370,12 +401,19 @@
     const rotateMsg = document.getElementById("rotateMsg");
     const restScreen = document.getElementById("restScreen");
     const restTitle = document.getElementById("restTitle");
+    const restSubtitle = document.getElementById("restSubtitle");
     const nextSetBtn = document.getElementById("nextSetBtn");
     const doneScreen = document.getElementById("doneScreen");
+    const doneTitle = document.getElementById("doneTitle");
     const doneSummary = document.getElementById("doneSummary");
     const restartBtn = document.getElementById("restartBtn");
     const exerciseGrid = document.getElementById("exerciseGrid");
     const hintText = document.getElementById("hintText");
+    const startSubtitle = document.getElementById("startSubtitle");
+    const repsLabel = document.getElementById("repsLabel");
+    const setsLabel = document.getElementById("setsLabel");
+    const langSelect = document.getElementById("langSelect");
+    const langSelectStart = document.getElementById("langSelectStart");
 
     const targetRepsInput = document.getElementById("targetRepsInput");
     const targetSetsInput = document.getElementById("targetSetsInput");
@@ -385,6 +423,51 @@
     let currentSet = 1;
 
     let facingMode = "user";
+
+    // ─────────────────────────────────────────────────────────────
+    //  Language selector — populate both dropdowns (start screen +
+    //  in-session topbar) from SUPPORTED_LANGS, keep them in sync,
+    //  and refresh every piece of static UI text when it changes.
+    // ─────────────────────────────────────────────────────────────
+    function populateLangSelect(sel) {
+      sel.innerHTML = "";
+      for (const [code, label] of Object.entries(SUPPORTED_LANGS)) {
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = label;
+        sel.appendChild(opt);
+      }
+      sel.value = getLang();
+    }
+    populateLangSelect(langSelect);
+    populateLangSelect(langSelectStart);
+
+    function onLangChange(newLang) {
+      setLang(newLang);
+      langSelect.value = newLang;
+      langSelectStart.value = newLang;
+      refreshStaticText();
+    }
+    langSelect.addEventListener("change", (e) => onLangChange(e.target.value));
+    langSelectStart.addEventListener("change", (e) => onLangChange(e.target.value));
+
+    // Re-applies t() to every piece of chrome text that isn't rebuilt
+    // every frame (HUD text inside the canvas is translated live in
+    // drawHUD()/processFrame() below, so it doesn't need a refresh here).
+    function refreshStaticText() {
+      startSubtitle.textContent = t("Choose an exercise — real-time form check prototype");
+      repsLabel.textContent = t("REPS / SET");
+      setsLabel.textContent = t("TOTAL SETS");
+      startBtn.textContent = startBtn.disabled ? startBtn.textContent : t("Start Camera");
+      restartBtn.textContent = t("Finish / Restart");
+      restSubtitle.textContent = t("Catch your breath before the next set.");
+      doneTitle.textContent = t("Workout Complete! 🎉");
+      updateHintText();
+      checkOrientation();
+      document.querySelectorAll(".ex-pill").forEach(p => {
+        p.textContent = tExercise(p.dataset.key, EXERCISES[p.dataset.key].displayName);
+      });
+    }
 
     // ─────────────────────────────────────────────────────────────
     //  Geometry helpers (unchanged from the squat prototype)
@@ -408,132 +491,66 @@
     function maxVis(lm, name) { return Math.max(visibility(lm, "left_" + name), visibility(lm, "right_" + name)); }
 
     // ─────────────────────────────────────────────────────────────
-    //  Exercise definitions
-    //
-    //  All 28 exercise classes now live in ./exercise/*.js and are pulled
-    //  in as a single module import (see top of file: `import { Exercises }
-    //  from "./exercise/index.js"`). Each mirrors exercises/definitions.py's
-    //  shape:
-    //    computeAngles(lm,w,h)      -> dict of angle/ratio values
-    //    getFsmState(a)             -> "up"/"down"/"mid" etc, sets reached* flags
-    //    shouldCount()              -> debounced completion check
-    //    checkFormErrors(a)         -> LIVE per-frame cues (voice/HUD), also
-    //                                  updates a small named per-rep tracker,
-    //                                  reset exactly at the FSM's cycle boundary
-    //                                  (Section 30's "small named trackers"
-    //                                  pattern — NOT the generic accumulator
-    //                                  that caused stale-carryover bugs)
-    //    getRepQualityErrors()      -> called once at the counting frame,
-    //                                  returns the rep's worst tracked fault
-    //                                  (or null) and resets the tracker
-    //    checkStartPosture(lm,w,h)  -> calibration gate
-    //    getCalibrationChecks()     -> ordered list, first failing wins
-    //    trackedLandmarks           -> joints (no side prefix) this exercise's
-    //                                  angle math depends on, used for the
-    //                                  WORKING-phase visibility gate
-    // ─────────────────────────────────────────────────────────────
-
-
-    // ─────────────────────────────────────────────────────────────
-    //  CATEGORY DIVISION — muscle-group tagging for all 28 exercises
-    //  built so far (original 18 + Phase 1's 2 + Phase 2's 5 + Phase 3's 3).
-    //
-    //  Kept as a standalone lookup table rather than adding a `static
-    //  category` field to every exercise class — avoids re-touching
-    //  already-delivered code, and gives the future equipment-scan UI
-    //  (QR -> equipment -> exercise list) one single place to read from
-    //  regardless of how that UI ends up querying it.
-    //
-    //  This is muscle-group category only. Equipment-to-exercise mapping
-    //  (which exercises a scanned dumbbell/barbell/machine unlocks) is a
-    //  separate table for later, not built here — scoped out per this
-    //  session's direction.
+    //  CATEGORY DIVISION — muscle-group tagging (unchanged)
     // ─────────────────────────────────────────────────────────────
     const EXERCISE_CATEGORIES = {
-      // Original 18
-      squat: "legs",
-      push_up: "chest",
-      bicep_curl: "arms",
-      hammer_curl: "arms",
-      shoulder_press: "shoulders",
-      lateral_raise: "shoulders",
-      lunge: "legs",
-      side_lunge: "legs",
-      deadlift: "back",
-      glute_bridge: "glutes",
-      calf_raise: "legs",
-      leg_raise: "core",
-      plank: "core",
-      wall_sit: "legs",
-      jumping_jack: "full_body",
-      high_knees: "full_body",
-      mountain_climber: "core",
-      tricep_dip: "arms",
-      // Phase 1
-      bench_press: "chest",
-      bent_over_row: "back",
-      // Phase 2
-      fly: "chest",
-      front_raise: "shoulders",
-      rear_delt_fly: "shoulders",
-      overhead_tricep_extension: "arms",
-      tricep_kickback: "arms",
-      // Phase 3
-      lat_pulldown: "back",
-      sit_up: "core",
-      russian_twist: "core",
+      squat: "legs", push_up: "chest", bicep_curl: "arms", hammer_curl: "arms",
+      shoulder_press: "shoulders", lateral_raise: "shoulders", lunge: "legs",
+      side_lunge: "legs", deadlift: "back", glute_bridge: "glutes",
+      calf_raise: "legs", leg_raise: "core", plank: "core", wall_sit: "legs",
+      jumping_jack: "full_body", high_knees: "full_body", mountain_climber: "core",
+      tricep_dip: "arms", bench_press: "chest", bent_over_row: "back",
+      fly: "chest", front_raise: "shoulders", rear_delt_fly: "shoulders",
+      overhead_tricep_extension: "arms", tricep_kickback: "arms",
+      lat_pulldown: "back", sit_up: "core", russian_twist: "core",
     };
 
-    // Helper: returns an array of exercise keys for a given category,
-    // e.g. getExercisesByCategory("legs") -> ["squat", "lunge", ...].
-    // Filters against the live EXERCISES registry so it never returns a
-    // key that isn't actually registered (protects against this table
-    // drifting out of sync with EXERCISES over time).
     function getExercisesByCategory(category) {
       return Object.keys(EXERCISE_CATEGORIES).filter(
         key => EXERCISE_CATEGORIES[key] === category && EXERCISES[key]
       );
     }
-
-    // Helper: returns the sorted list of distinct categories present,
-    // useful for building a category filter UI (tabs/pills) dynamically
-    // instead of hardcoding the category names in the UI layer.
     function getAllCategories() {
       return [...new Set(Object.values(EXERCISE_CATEGORIES))].sort();
     }
 
-    // Pulled in from ./exercise/index.js — 28 keys, matches EXERCISE_CATEGORIES
-    // above exactly. Previously this was a hand-written literal here that only
-    // had 25 entries (missing lat_pulldown, sit_up, russian_twist).
     const EXERCISES = Exercises;
 
-
     let SELECTED_EXERCISE = "squat";
+    let ex = new EXERCISES[SELECTED_EXERCISE]();
+
+    function updateHintText() {
+      const orient = EXERCISES[SELECTED_EXERCISE].orientation;
+      if (orient === "portrait")
+        hintText.textContent = t("Point the phone upright so your full body is visible, feet to head, facing the camera.");
+      else if (orient === "landscape")
+        hintText.textContent = t("Rotate the phone to landscape for a clear side-view of your body.");
+      else
+        hintText.textContent = t("Position the phone so your full body is visible (lying or side view is fine).");
+    }
 
     // Build exercise selector pills
     for (const key of Object.keys(EXERCISES)) {
       const cls = EXERCISES[key];
       const pill = document.createElement("div");
       pill.className = "ex-pill" + (key === SELECTED_EXERCISE ? " selected" : "");
-      pill.textContent = cls.displayName;
+      pill.textContent = tExercise(key, cls.displayName);
       pill.dataset.key = key;
       pill.addEventListener("click", () => {
         SELECTED_EXERCISE = key;
         document.querySelectorAll(".ex-pill").forEach(p => p.classList.remove("selected"));
         pill.classList.add("selected");
-        const orient = EXERCISES[key].orientation;
-        if (orient === "portrait")
-          hintText.textContent = "Point the phone upright so your full body is visible, feet to head, facing the camera.";
-        else if (orient === "landscape")
-          hintText.textContent = "Rotate the phone to landscape for a clear side-view of your body.";
-        else
-          hintText.textContent = "Position the phone so your full body is visible (lying or side view is fine).";
+        updateHintText();
       });
       exerciseGrid.appendChild(pill);
     }
+    updateHintText();
+    refreshStaticText();
 
     // ─────────────────────────────────────────────────────────────
-    //  Voice
+    //  Voice — every speak() call is routed through t() so every
+    //  existing exercise file's hardcoded English strings translate
+    //  automatically without touching those 44 files.
     // ─────────────────────────────────────────────────────────────
     const voice = {
       lastMsg: "",
@@ -541,18 +558,23 @@
       cooldown: 3000,
       currentSource: null, // "coach" while an Ask Coach reply is playing, else null
       speak(text, priority = false, source = "form") {
+        if (this.micActive) return;
+        const localized = t(text);
         try {
           const now = Date.now();
-          if (!priority && text === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
+          if (!priority && localized === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
           if (!priority && (now - this.lastTime) < 800) return;
           if (!window.speechSynthesis) return;
           window.speechSynthesis.cancel();
-          const u = new SpeechSynthesisUtterance(text);
+          const u = new SpeechSynthesisUtterance(localized);
+          u.lang = getLang() === "hi" ? "hi-IN" : "en-US";
+          const v = pickVoice();
+          if (v) u.voice = v;
           u.rate = 1.05;
           u.onstart = () => { this.currentSource = source; };
           u.onend = () => { if (this.currentSource === source) this.currentSource = null; };
           window.speechSynthesis.speak(u);
-          this.lastMsg = text;
+          this.lastMsg = localized;
           this.lastTime = now;
         }
         catch (e) {
@@ -560,6 +582,13 @@
         }
       }
     };
+
+    // Force the voice list to populate on some Android browsers that load
+    // it asynchronously — otherwise pickVoice() can return null on the
+    // very first speak() call after page load.
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = () => {};
+    }
 
     // ─────────────────────────────────────────────────────────────
     //  Engine state
@@ -578,7 +607,6 @@
     let calActiveId = null;
     let coreWasVisible = true;
 
-    let ex = new EXERCISES[SELECTED_EXERCISE]();
 
     // Section 46 item 5: built once per push-to-talk press, not polled.
     let recentFormErrorLog = [];
@@ -612,12 +640,6 @@
         visibility(lm, "left_hip") > 0.4 && visibility(lm, "right_hip") > 0.4;
     }
 
-    // Exercise-specific WORKING-phase visibility gate — averaged threshold
-    // across the exercise's own declared joints, mirroring
-    // ExerciseEngine._working_visible() in core/engine.py (Section 32 item 3 /
-    // Section 29 bug #4-#5: coreVisible() alone isn't enough for exercises that
-    // depend on knees/ankles/elbows/wrists; a strict AND-of-all-joints gate is
-    // too fragile against normal per-frame confidence noise, hence averaging).
     function workingVisible(lm) {
       const joints = ex.constructor.trackedLandmarks || [];
       if (!joints.length) return true;
@@ -650,13 +672,9 @@
       repRejected: false, formScore: 100,
     };
 
-    // Debug readout — shows live angle values + FSM flags so thresholds can be
-    // tuned against real camera framing instead of guessed at. Toggle off by
-    // setting DEBUG_OVERLAY = false once thresholds are confirmed good.
     const DEBUG_OVERLAY = true;
     let lastAngles = {};
 
-    // Calibration hold tracking (per current exercise instance)
     let calStart = null;
     let isCalibrated = false;
 
@@ -679,7 +697,7 @@
 
       if (!coreVisible(lm)) {
         feedbackZone = "RED";
-        uiState.message = "Step into frame — I can't see you clearly.";
+        uiState.message = t("Step into frame — I can't see you clearly.");
         if (coreWasVisible) { voice.speak("Correct your position.", true); coreWasVisible = false; }
         return;
       }
@@ -690,16 +708,18 @@
         if (failing === null) {
           const held = checkCalibrationHold(lm, w, h, timestamp);
           uiState.calRemaining = Math.max(0, uiState.calTotal - held);
-          uiState.message = held > 0 ? `Hold still... ${uiState.calRemaining.toFixed(1)}s` : "Hold the position!";
+          uiState.message = held > 0
+            ? `${t("Hold still...")} ${uiState.calRemaining.toFixed(1)}s`
+            : t("Hold the position!");
           feedbackZone = "YELLOW";
         } else {
           uiState.calRemaining = uiState.calTotal;
-          uiState.message = failing.message;
+          uiState.message = t(failing.message);
           feedbackZone = "YELLOW";
         }
         if (isCalibrated) {
           phase = "WORKING";
-          voice.speak(`Go! Set ${currentSet}, start your ${ex.constructor.displayName}.`, true);
+          voice.speak(tGoStart(currentSet, tExercise(ex.constructor.key, ex.constructor.displayName)), true);
         }
         return;
       }
@@ -707,13 +727,11 @@
       if (phase === "WORKING") {
         if (!workingVisible(lm)) {
           feedbackZone = "YELLOW";
-          uiState.message = "Keep your tracked joints in frame.";
+          uiState.message = t("Keep your tracked joints in frame.");
           formErrors = [];
           return;
         }
-        // Duration exercises (plank / wall sit) need wall-clock for hold timing
         if (ex.constructor.isDurationBased) ex._currentTime = timestamp;
-        // Calf raise adapts baseline only after calibration completes
         if (ex.constructor.key === "calf_raise") ex.isCalibrated = true;
 
         const a = ex.computeAngles(lm, w, h);
@@ -721,7 +739,6 @@
         ex.prevState = ex.currentState;
         ex.currentState = ex.getFsmState(a);
 
-        // Some exercises (lateral raise, lunge) need landmarks for form checks
         const errs = ex.checkFormErrors.length > 1
           ? ex.checkFormErrors(a, lm, w, h)
           : ex.checkFormErrors(a);
@@ -731,10 +748,6 @@
 
 
         if (ex.shouldCount()) {
-          // Quality is graded now, not a reject/accept gate — any completed
-          // rep counts. getRepQualityErrors() may return {tier, message, speech}
-          // (new exercises) or the old null/object shape (not-yet-migrated
-          // exercises) — normalized below so nothing else needs touching yet.
           const raw = ex.getRepQualityErrors ? ex.getRepQualityErrors() : null;
           const quality = (raw && raw.tier) ? raw : { tier: raw ? "poor" : "good", message: raw?.message, speech: raw?.speech };
 
@@ -746,7 +759,7 @@
             logRepQuality(quality.tier); // logged only, never spoken
 
             if (quality.tier === "good" || !quality.speech) {
-              voice.speak(`Rep ${repCount}`, false);
+              voice.speak(tRep(repCount), false);
             } else {
               voice.speak(quality.speech, false); // informational, not a rejection
             }
@@ -755,13 +768,13 @@
             if (repCount >= TARGET_REPS) {
               if (currentSet < TARGET_SETS) {
                 phase = "REST";
-                restTitle.textContent = `Set ${currentSet} Complete!`;
-                nextSetBtn.textContent = `Start Set ${currentSet + 1}`;
+                restTitle.textContent = `${t("Set")} ${currentSet} ${t("Complete!")}`;
+                nextSetBtn.textContent = `${t("Start Set")} ${currentSet + 1}`;
                 restScreen.classList.add("show");
-                voice.speak(`Set ${currentSet} complete! Take a rest.`, true);
+                voice.speak(tSetComplete(currentSet), true);
               } else {
                 phase = "DONE";
-                doneSummary.textContent = `Completed ${TARGET_SETS} sets · Total ${totalRepsCompleted} reps!`;
+                doneSummary.textContent = `${t("Completed")} ${TARGET_SETS} ${t("sets")} · ${t("Total")} ${totalRepsCompleted} ${t("reps!")}`;
                 doneScreen.classList.add("show");
                 voice.speak("Workout complete! Great job!", true);
               }
@@ -811,12 +824,11 @@
     }
 
     function drawHUD(w, h, videoOffsetY = 0) {
-      const displayName = ex.constructor.displayName.toUpperCase();
-      if (phase === "CALIBRATING") {
+        const displayName = tExercise(ex.constructor.key, ex.constructor.displayName).toUpperCase();      if (phase === "CALIBRATING") {
         ctx.fillStyle = "#ffd23f";
         ctx.font = `${Math.round(w * 0.045)}px sans-serif`;
         ctx.textAlign = "center";
-        ctx.fillText(`${displayName} — SET ${currentSet}/${TARGET_SETS}`, w / 2, h * 0.08);
+        ctx.fillText(`${displayName} — ${t("SET")} ${currentSet}/${TARGET_SETS}`, w / 2, h * 0.08);
 
         const barW = w * 0.6, barH = h * 0.03, bx = (w - barW) / 2, by = h * 0.85;
         roundedPanel(bx - 4, by - 4, barW + 8, barH + 8, 0.5);
@@ -837,24 +849,18 @@
           roundedPanel(w * 0.1, h * 0.06, w * 0.8, h * 0.06, 0.6);
           ctx.fillText(uiState.message, w / 2, h * 0.105);
         }
-        // Fit the rep/form panel into the black letterbox bar above the video
-        // (videoOffsetY) instead of a fixed 34%-of-screen block that used to
-        // spill down over the person's face. Falls back to the old default
-        // when there's no real letterbox (video fills the screen).
         const panelW = Math.min(220, w * 0.45);
         const barH = videoOffsetY > 4 ? videoOffsetY : h * 0.34;
         const panelH = Math.max(60, Math.min(barH, h * 0.34));
-        // Font sizes scale off panelH (not screen width) so text stays
-        // proportioned to the box even when the box is small.
         roundedPanel(0, 0, panelW, panelH, 0.68);
         ctx.textAlign = "left";
         ctx.fillStyle = "#00e5ff";
         ctx.font = `${Math.round(panelH * 0.16)}px sans-serif`;
-        ctx.fillText(`${displayName.slice(0, 14)} · SET ${currentSet}/${TARGET_SETS}`, 8, panelH * 0.20);
+        ctx.fillText(`${displayName.slice(0, 14)} · ${t("SET")} ${currentSet}/${TARGET_SETS}`, 8, panelH * 0.20);
 
         ctx.fillStyle = "#999";
         ctx.font = `${Math.round(panelH * 0.11)}px sans-serif`;
-        ctx.fillText("REPS", 8, panelH * 0.38);
+        ctx.fillText(t("REPS"), 8, panelH * 0.38);
         ctx.fillStyle = "#fff";
         ctx.font = `bold ${Math.round(panelH * 0.40)}px sans-serif`;
         ctx.fillText(String(repCount), 8, panelH * 0.68);
@@ -864,7 +870,7 @@
 
         ctx.fillStyle = "#999";
         ctx.font = `${Math.round(panelH * 0.11)}px sans-serif`;
-        ctx.fillText("FORM", 8, panelH * 0.84);
+        ctx.fillText(t("FORM"), 8, panelH * 0.84);
         ctx.fillStyle = uiState.formScore >= 85 ? "#00dc64" : uiState.formScore >= 65 ? "#dcdc00" : "#dc2828";
         ctx.font = `${Math.round(panelH * 0.16)}px sans-serif`;
         ctx.fillText(`${uiState.formScore}%`, 8, panelH * 0.97);
@@ -873,11 +879,11 @@
           ctx.fillStyle = "#dc2828";
           ctx.font = `bold ${Math.round(w * 0.03)}px sans-serif`;
           ctx.textAlign = "center";
-          ctx.fillText("NOT COUNTED — FIX FORM", w / 2, h * 0.1);
+          ctx.fillText(t("NOT COUNTED — FIX FORM"), w / 2, h * 0.1);
         }
 
         if (formErrors.length) {
-          const msg = "⚠ " + formErrors[0].message;
+          const msg = "⚠ " + t(formErrors[0].message);
           ctx.textAlign = "right";
           ctx.fillStyle = "#0009";
           ctx.font = `${Math.round(w * 0.028)}px sans-serif`;
@@ -893,8 +899,6 @@
         ctx.fillText((ex.currentState || "").toUpperCase(), w - 12, h - 14);
 
         if (DEBUG_OVERLAY) {
-          // Live angle values only — right-aligned, top-right, clear of both
-          // the FPS/Flip topbar and the rep panel.
           const lines = Object.entries(lastAngles).map(
             ([k, v]) => `${k}: ${typeof v === "number" ? v.toFixed(1) : v}`
           );
@@ -914,23 +918,22 @@
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Orientation handling — per-exercise, some exercises (Leg Raise)
-    //  have no enforced orientation since they're performed lying down.
+    //  Orientation handling
     // ─────────────────────────────────────────────────────────────
     function checkOrientation() {
+      if (!ex) { rotatePrompt.classList.remove("show"); return; }
       const required = ex.constructor.orientation;
       if (!required) { rotatePrompt.classList.remove("show"); return; }
       if (required === "landscape") {
-        rotateMsg.textContent = `${ex.constructor.displayName} needs your phone in LANDSCAPE — rotate it sideways for a clear side-view profile.`;
+        rotateMsg.textContent = `${localizedName} ${t("needs your phone in LANDSCAPE — rotate it sideways for a clear side-view profile.")}`;
       } else {
-        rotateMsg.textContent = `${ex.constructor.displayName} needs your phone in PORTRAIT — rotate it upright and step back so your full body is visible.`;
-      }
+        rotateMsg.textContent = `${localizedName} ${t("needs your phone in PORTRAIT — rotate it upright and step back so your full body is visible.")}`;      }
       const mismatched = (required === "portrait" && !isPortrait()) || (required === "landscape" && isPortrait());
       rotatePrompt.classList.toggle("show", mismatched);
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  Camera / model plumbing (unchanged from squat prototype)
+    //  Camera / model plumbing
     // ─────────────────────────────────────────────────────────────
     let poseLandmarker = null;
     let running = false;
@@ -950,30 +953,27 @@
       });
     }
 
+    // Fixed: no longer forces the camera to the SCREEN'S aspect ratio.
+    // Requesting an aspect ratio the sensor doesn't natively support makes
+    // Chrome CROP the sensor feed before it ever reaches the canvas — that
+    // was the root cause of the "shattered"/cropped frame on both portrait
+    // and landscape. Letting width/height float independently (both capped
+    // at MAX_SIDE, no aspectRatio constraint) lets the sensor report its
+    // own native ratio, and the existing getDrawTransform() "contain" logic
+    // below correctly letterboxes whatever comes back.
     async function startCamera() {
-      const screenAspect = window.innerWidth / window.innerHeight;
-      // Request a resolution whose ASPECT RATIO actually matches the screen —
-      // a hardcoded square (960x960) is what caused the huge letterboxing on
-      // a portrait phone. Longest side capped at 1280 to stay fast on
-      // mid-range hardware.
       const MAX_SIDE = 1280;
-      let idealWidth, idealHeight;
-      if (screenAspect >= 1) {
-        idealWidth = MAX_SIDE;
-        idealHeight = Math.round(MAX_SIDE / screenAspect);
-      } else {
-        idealHeight = MAX_SIDE;
-        idealWidth = Math.round(MAX_SIDE * screenAspect);
-      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode,
-          aspectRatio: { ideal: screenAspect },
-          width: { ideal: idealWidth },
-          height: { ideal: idealHeight },
+          width: { ideal: MAX_SIDE },
+          height: { ideal: MAX_SIDE },
+          resizeMode: "none",
         },
         audio: false,
       });
+
       video.srcObject = stream;
       await new Promise(res => { video.onloadedmetadata = () => { video.play(); res(); }; });
       resizeCanvasToViewport();
@@ -994,8 +994,6 @@
       const bucket = window.innerWidth >= window.innerHeight ? "landscape" : "portrait";
       if (running && bucket !== lastAspectBucket) {
         lastAspectBucket = bucket;
-        // Re-negotiate the camera stream to match the new orientation —
-        // otherwise it keeps its old (now wrong-aspect) resolution forever.
         stopCamera();
         await startCamera();
       }
@@ -1024,33 +1022,33 @@
       if (!orientationBlocked && phase !== "REST" && phase !== "DONE" && vw && vh && video.currentTime !== lastVideoTime) {
         lastVideoTime = video.currentTime;
         const result = poseLandmarker.detectForVideo(video, performance.now());
-        const t = getDrawTransform(w, h, vw, vh);
+        const t2 = getDrawTransform(w, h, vw, vh);
 
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, w, h);
 
         ctx.save();
         if (facingMode === "user") {
-          ctx.translate(t.offsetX + t.drawW, t.offsetY);
+          ctx.translate(t2.offsetX + t2.drawW, t2.offsetY);
           ctx.scale(-1, 1);
-          ctx.drawImage(video, 0, 0, t.drawW, t.drawH);
+          ctx.drawImage(video, 0, 0, t2.drawW, t2.drawH);
         } else {
-          ctx.drawImage(video, t.offsetX, t.offsetY, t.drawW, t.drawH);
+          ctx.drawImage(video, t2.offsetX, t2.offsetY, t2.drawW, t2.drawH);
         }
         ctx.restore();
 
         if (result.landmarks && result.landmarks.length > 0) {
           const lmRaw = result.landmarks[0];
           const lm = facingMode === "user" ? lmRaw.map(p => ({ ...p, x: 1 - p.x })) : lmRaw;
-          processFrame(lm, t.drawW, t.drawH, performance.now() / 1000);
-          drawSkeleton(lm, t.drawW, t.drawH, t.offsetX, t.offsetY);
+          processFrame(lm, t2.drawW, t2.drawH, performance.now() / 1000);
+          drawSkeleton(lm, t2.drawW, t2.drawH, t2.offsetX, t2.offsetY);
         } else {
           feedbackZone = "RED";
-          uiState.message = "No person detected — step into frame.";
+          uiState.message = t("No person detected — step into frame.");
         }
 
         drawBorder(w, h);
-        drawHUD(w, h, t.offsetY);
+        drawHUD(w, h, t2.offsetY);
 
         fpsCounter++;
         const now = performance.now();
@@ -1070,7 +1068,6 @@
       repCount = 0;
       totalRepsCompleted = 0;
 
-      // Instantiate the chosen exercise fresh
       ex = new EXERCISES[SELECTED_EXERCISE]();
       uiState.calTotal = ex.constructor.calibrationDuration;
       uiState.calRemaining = uiState.calTotal;
@@ -1081,11 +1078,11 @@
       calActiveId = null;
 
       startBtn.disabled = true;
-      startBtn.textContent = "Loading model…";
+      startBtn.textContent = t("Loading model…");
       try {
-        statusEl.textContent = "Loading MediaPipe model…";
+        statusEl.textContent = t("Loading MediaPipe model…");
         await initModel();
-        statusEl.textContent = "Requesting camera…";
+        statusEl.textContent = t("Requesting camera…");
         await startCamera();
         startScreen.style.display = "none";
         stage.style.display = "flex";
@@ -1097,7 +1094,7 @@
       } catch (err) {
         statusEl.textContent = "Error: " + err.message;
         startBtn.disabled = false;
-        startBtn.textContent = "Start Camera";
+        startBtn.textContent = t("Start Camera");
         console.error(err);
       }
     });
@@ -1112,7 +1109,7 @@
       phase = "CALIBRATING";
       calFailedIds = {};
       calActiveId = null;
-      voice.speak(`Get ready for set ${currentSet}`, true);
+      voice.speak(tGetReady(currentSet), true);
     });
 
     restartBtn.addEventListener("click", () => {
@@ -1120,7 +1117,7 @@
       stage.style.display = "none";
       startScreen.style.display = "flex";
       startBtn.disabled = false;
-      startBtn.textContent = "Start Camera";
+      startBtn.textContent = t("Start Camera");
       running = false;
       stopCamera();
     });

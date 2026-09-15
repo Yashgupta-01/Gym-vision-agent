@@ -76,7 +76,7 @@ async function sendToCoach(transcript) {
     const res = await fetch(ASK_COACH_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript, session_snapshot: snapshot }),
+      body: JSON.stringify({ transcript, session_snapshot: snapshot, language: getLang() }),
       signal: controller.signal,
     });
     clearTimeout(timer);
@@ -100,6 +100,7 @@ async function transcribeBlob(blob) {
   try {
     const fd = new FormData();
     fd.append("audio", blob, "recording.webm");
+    fd.append("language", getLang());
     const res = await fetch(TRANSCRIBE_URL, {
       method: "POST",
       body: fd,
@@ -239,3 +240,5 @@ export function initAskCoach() {
   btn.addEventListener("touchend",   stop,  { passive: false });
   btn.addEventListener("mouseup",    stop);
 }
+
+

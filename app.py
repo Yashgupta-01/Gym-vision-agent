@@ -109,6 +109,7 @@ class SessionSnapshot(BaseModel):
 class AskRequest(BaseModel):
     transcript: str
     session_snapshot: SessionSnapshot
+    language: str = "en"
 
 
 class AskResponse(BaseModel):
@@ -120,8 +121,45 @@ class AskResponse(BaseModel):
 FALLBACK_REPLY = "Sorry, I couldn't get an answer just now — keep going, I'll catch up."
 
 
+class SessionSnapshot(BaseModel):
+    exercise: str
+    set: int
+    reps: int
+    targetReps: int
+    targetSets: int
+    phase: str
+    recentFormErrors: List[str] = Field(default_factory=list)
+    lastCue: Optional[str] = ""
+
+class AskRequest(BaseModel):
+    transcript: str
+    session_snapshot: SessionSnapshot
+    language: str = "en"          # "en" | "hi"
+
+LANG_NAMES = {"en": "English", "hi": "Hindi (Devanagari script, हिंदी)"}
+
+def build_system_prompt(language: str) -> str:
+    lang_name = LANG_NAMES.get(language, "English")
+    lang_rule = (
+        f'CRITICAL, NON-NEGOTIABLE RULE: Your ENTIRE reply must be written in {lang_name}. '
+        f'Do not switch to English or mix languages, even if the member writes or speaks in English. '
+        f'Do not romanize Hindi (no "Hinglish" / Roman-script Hindi) — use proper Devanagari script only. '
+        f'Only exact proper nouns that have no natural Hindi equivalent (e.g. a specific exercise name if '
+        f'truly untranslatable) may stay in English; everything else — including all sentences, connecting '
+        f'words, and instructions — must be in {lang_name}. If you are unsure how to say something in '
+        f'{lang_name}, say it in {lang_name} anyway, imperfectly, rather than falling back to English.\n\n'
+        if language != "en" else ""
+    )
+    return lang_rule + SYSTEM_PROMPT
+
+
 def build_prompt(req: AskRequest) -> str:
     snap = req.session_snapshot
+    lang_name = LANG_NAMES.get(req.language, "English")
+    reminder = (
+        f'\n\n(Reminder: reply language = {lang_name}. Your whole answer must be in {lang_name}.)'
+        if req.language != "en" else ""
+    )
     return (
         f"Current session state:\n"
         f"- Exercise: {snap.exercise}\n"
@@ -131,6 +169,7 @@ def build_prompt(req: AskRequest) -> str:
         f"- Recent form errors: {', '.join(snap.recentFormErrors) or 'none'}\n"
         f"- Last coaching cue: {snap.lastCue or 'none'}\n\n"
         f'Member just asked: "{req.transcript}"'
+        f"{reminder}"
     )
 
 
@@ -141,7 +180,7 @@ def ask_coach(req: AskRequest):
         chat = client.chats.create(
             model=MODEL_NAME,
             config=genai_types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
+                system_instruction=build_system_prompt(req.language),
                 max_output_tokens=250,
                 temperature=0.4,
             )
@@ -185,7 +224,7 @@ def _get_whisper():
 
 
 @app.post("/transcribe")
-async def transcribe(audio: UploadFile = File(...)):
+async def transcribe(audio: UploadFile = File(...), language: str = "en"):
     """Receive an audio blob, transcribe with Whisper, return {text}."""
     suffix = ".webm"  # Chrome/Android records as webm; ffmpeg handles it
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
@@ -193,7 +232,7 @@ async def transcribe(audio: UploadFile = File(...)):
         tmp_path = tmp.name
     try:
         model = _get_whisper()
-        result = model.transcribe(tmp_path, language="en", fp16=False)
+        result = model.transcribe(tmp_path, language=language , fp16=False)
         text = result.get("text", "").strip()
         return {"text": text}
     except Exception as e:
@@ -206,4 +245,4 @@ async def transcribe(audio: UploadFile = File(...)):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": MODEL_NAME}
+    return {"status": "ok", "model": MODEL_NAME}
