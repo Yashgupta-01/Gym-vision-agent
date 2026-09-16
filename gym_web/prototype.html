@@ -558,14 +558,17 @@
       cooldown: 3000,
       currentSource: null, // "coach" while an Ask Coach reply is playing, else null
       speak(text, priority = false, source = "form") {
-        if (this.micActive) return;
-        const localized = t(text);
-        try {
-          const now = Date.now();
-          if (!priority && localized === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
-          if (!priority && (now - this.lastTime) < 800) return;
-          if (!window.speechSynthesis) return;
-          window.speechSynthesis.cancel();
+      if (this.micActive) return;
+  // Do not let form cues interrupt an in-progress coach reply
+      if (source !== "coach" && this.currentSource === "coach") return;
+      const localized = t(text);
+      try {
+    const now = Date.now();
+    if (!priority && localized === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
+    if (!priority && (now - this.lastTime) < 800) return;
+    if (!window.speechSynthesis) return;
+    // Only cancel when this utterance is allowed to speak
+    window.speechSynthesis.cancel();
           const u = new SpeechSynthesisUtterance(localized);
           u.lang = getLang() === "hi" ? "hi-IN" : "en-US";
           const v = pickVoice();
@@ -924,6 +927,9 @@
       if (!ex) { rotatePrompt.classList.remove("show"); return; }
       const required = ex.constructor.orientation;
       if (!required) { rotatePrompt.classList.remove("show"); return; }
+
+      const localizedName = tExercise(ex.constructor.key, ex.constructor.displayName);
+
       if (required === "landscape") {
         rotateMsg.textContent = `${localizedName} ${t("needs your phone in LANDSCAPE — rotate it sideways for a clear side-view profile.")}`;
       } else {

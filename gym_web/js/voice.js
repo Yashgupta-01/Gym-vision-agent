@@ -6,14 +6,17 @@ const voice = {
   cooldown: 3000,
   currentSource: null,
   speak(text, priority = false, source = "form") {
-    if (this.micActive) return;
-    const localized = t(text);              // ← only change: route through t()
-    try {
-      const now = Date.now();
-      if (!priority && localized === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
-      if (!priority && (now - this.lastTime) < 800) return;
-      if (!window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
+  if (this.micActive) return;
+  // Do not let form cues interrupt an in-progress coach reply
+  if (source !== "coach" && this.currentSource === "coach") return;
+  const localized = t(text);
+  try {
+    const now = Date.now();
+    if (!priority && localized === this.lastMsg && (now - this.lastTime) < this.cooldown) return;
+    if (!priority && (now - this.lastTime) < 800) return;
+    if (!window.speechSynthesis) return;
+    // Only cancel when this utterance is allowed to speak
+    window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(localized);
       u.lang = getLang() === "hi" ? "hi-IN" : "en-US";
       const v = pickVoice();

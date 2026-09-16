@@ -16,6 +16,9 @@
 // ── Config ────────────────────────────────────────────────────────────────────
 // Your laptop's LAN IP — the phone POSTs here.
 // Update this whenever your laptop's IP changes (or set it in one place below).
+
+import { getLang } from "./i18n.js";
+
 const BACKEND_URL = "http://192.168.29.196:8000";
 const ASK_COACH_URL  = `${BACKEND_URL}/ask-coach`;
 const TRANSCRIBE_URL = `${BACKEND_URL}/transcribe`;

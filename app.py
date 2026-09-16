@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 import tempfile
 import shutil
 
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from google import genai
@@ -93,23 +93,6 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
-
-
-class SessionSnapshot(BaseModel):
-    exercise: str
-    set: int
-    reps: int
-    targetReps: int
-    targetSets: int
-    phase: str
-    recentFormErrors: List[str] = Field(default_factory=list)
-    lastCue: Optional[str] = ""
-
-
-class AskRequest(BaseModel):
-    transcript: str
-    session_snapshot: SessionSnapshot
-    language: str = "en"
 
 
 class AskResponse(BaseModel):
@@ -181,7 +164,7 @@ def ask_coach(req: AskRequest):
             model=MODEL_NAME,
             config=genai_types.GenerateContentConfig(
                 system_instruction=build_system_prompt(req.language),
-                max_output_tokens=250,
+                max_output_tokens=300,
                 temperature=0.4,
             )
         )
@@ -212,8 +195,8 @@ def _get_whisper():
                 os.environ["PATH"] += os.pathsep + ffmpeg_dir
 
             import whisper
-            print("[transcribe] Loading Whisper 'base' model (one-time, ~140 MB)…")
-            _whisper_model = whisper.load_model("base")
+            print("[transcribe] Loading Whisper 'small' model (one-time, ~140 MB)…")
+            _whisper_model = whisper.load_model("small")
             print("[transcribe] Whisper ready.")
         except ImportError:
             raise RuntimeError(
@@ -223,26 +206,67 @@ def _get_whisper():
     return _whisper_model
 
 
+
 @app.post("/transcribe")
-async def transcribe(audio: UploadFile = File(...), language: str = "en"):
+async def transcribe(
+    audio: UploadFile = File(...),
+    language: str = Form("en"),
+):
     """Receive an audio blob, transcribe with Whisper, return {text}."""
-    suffix = ".webm"  # Chrome/Android records as webm; ffmpeg handles it
+    lang = (language or "en").strip().lower()
+    if lang in ("hindi", "hin"):
+        lang = "hi"
+    if lang not in ("en", "hi"):
+        lang = "en"
+
+    suffix = ".webm"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         shutil.copyfileobj(audio.file, tmp)
         tmp_path = tmp.name
     try:
         model = _get_whisper()
-        result = model.transcribe(tmp_path, language=language , fp16=False)
-        text = result.get("text", "").strip()
+        print(f"[transcribe] language={lang!r} file={audio.filename!r}")
+
+        # Bias Whisper toward Hindi Devanagari (not Urdu Arabic script)
+        # and reduce English hallucinations on short gym clips.
+        kwargs = {
+            "language": lang,
+            "task": "transcribe",
+            "fp16": False,
+            "condition_on_previous_text": False,
+            "temperature": 0.0,
+        }
+        if lang == "hi":
+            kwargs["initial_prompt"] = (
+                "यह एक जिम में हिंदी बातचीत है। "
+                "प्रोटेइन, पानी, रेप्स, सेट, व्यायाम।"
+            )
+
+        result = model.transcribe(tmp_path, **kwargs)
+        text = (result.get("text") or "").strip()
+
+        # If model still returned Urdu/Arabic script while we asked for Hindi,
+        # strip direction marks and log it (so you can see it in the terminal).
+        if lang == "hi" and text:
+            arabic_chars = sum(1 for c in text if "\u0600" <= c <= "\u06FF")
+            if arabic_chars > len(text) * 0.3:
+                print(f"[transcribe] WARNING: got Arabic/Urdu script for hi: {text!r}")
+
+        print(f"[transcribe] → {text!r}")
         return {"text": text}
     except Exception as e:
         print(f"[transcribe] Whisper failed: {e}")
         return {"text": ""}
     finally:
         import os as _os
-        _os.unlink(tmp_path)
+        try:
+            _os.unlink(tmp_path)
+        except OSError:
+            pass
 
 
 @app.get("/health")
 def health():
     return {"status": "ok", "model": MODEL_NAME}
+
+
