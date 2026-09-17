@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>IGNITE AI — Biomechanical Rig Setup</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed-dim": "#ffb4aa",
+            "inverse-primary": "#745c00",
+            "primary-fixed": "#ffe089",
+            "inverse-on-surface": "#303034",
+            "on-background": "#e4e1e7",
+            "outline-variant": "#4d4634",
+            "secondary-container": "#05e777",
+            "on-secondary-fixed-variant": "#005226",
+            "on-tertiary": "#690003",
+            "tertiary-fixed": "#ffdad5",
+            "outline": "#9a907a",
+            "secondary-fixed-dim": "#00e475",
+            "background": "#131317",
+            "primary-fixed-dim": "#edc22e",
+            "surface-container-highest": "#353439",
+            "surface-tint": "#edc22e",
+            "inverse-surface": "#e4e1e7",
+            "primary-container": "#ffd23f",
+            "surface-dim": "#131317",
+            "on-surface": "#e4e1e7",
+            "on-tertiary-fixed": "#410001",
+            "error": "#ffb4ab",
+            "on-error": "#690005",
+            "on-tertiary-fixed-variant": "#930005",
+            "on-primary": "#3d2f00",
+            "on-primary-fixed": "#241a00",
+            "on-secondary-fixed": "#00210b",
+            "on-secondary": "#003918",
+            "on-surface-variant": "#d1c5ad",
+            "surface-container": "#1f1f23",
+            "tertiary-container": "#ffcbc4",
+            "surface-bright": "#39393d",
+            "on-secondary-container": "#00622e",
+            "surface-container-low": "#1b1b1f",
+            "on-error-container": "#ffdad6",
+            "on-primary-container": "#725a00",
+            "error-container": "#93000a",
+            "tertiary": "#fff0ee",
+            "primary": "#fff2d7",
+            "surface": "#131317",
+            "surface-container-lowest": "#0e0e12",
+            "surface-variant": "#353439",
+            "secondary": "#7dffa2",
+            "on-primary-fixed-variant": "#574500",
+            "surface-container-high": "#2a292e",
+            "on-tertiary-container": "#be000a",
+            "secondary-fixed": "#62ff96"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "1.25rem",
+            "gutter-desktop": "2rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2.5rem",
+            "margin-desktop": "3rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "telemetry-metric": ["Space Grotesk"],
+            "label-button": ["Space Grotesk"],
+            "body-md": ["Inter"],
+            "telemetry-metric-mobile": ["Space Grotesk"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Space Grotesk"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "display-hud-mobile": ["Space Grotesk"],
+            "label-hud": ["Space Grotesk"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Space Grotesk"],
+            "display-hud": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "telemetry-metric": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-button": ["15px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "body-md": ["15px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "telemetry-metric-mobile": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-hud-mobile": ["56px", { "lineHeight": "60px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "label-hud": ["11px", { "lineHeight": "14px", "letterSpacing": "0.12em", "fontWeight": "600" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "headline-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "display-hud": ["84px", { "lineHeight": "88px", "letterSpacing": "-0.04em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .hud-glow-amber {
+      box-shadow: 0 0 24px rgba(255, 210, 63, 0.22);
+    }
+    .hud-glow-amber-strong {
+      box-shadow: 0 0 32px rgba(255, 210, 63, 0.45);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-[#0A0A0E] text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-surface-container-lowest min-h-screen flex justify-center">
+<!-- Mobile Simulator Frame (390px width) -->
+<div class="w-full max-w-[390px] relative bg-[#0A0A0E] min-h-screen pb-48 flex flex-col shadow-2xl overflow-x-hidden border-x border-white/5">
+<!-- TOP APP BAR (Shared Component JSON) -->
+<header class="fixed top-0 left-0 w-full max-w-[390px] z-40 flex justify-between items-center px-gutter h-14 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 shadow-sm mx-auto right-0">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary-container text-xl" data-icon="bolt">bolt</span>
+<span class="font-headline-sm text-headline-sm font-bold tracking-widest text-primary-container">IGNITE AI</span>
+</div>
+<!-- Segmented Language Switcher & EN / HI action -->
+<div class="flex items-center bg-surface-container-lowest border border-outline-variant/40 rounded-full p-0.5">
+<button class="px-2.5 py-1 rounded-full text-label-hud font-label-hud uppercase bg-primary-container text-on-primary-container font-semibold transition-all" id="lang-en" onclick="setLanguage('en')">EN</button>
+<span class="text-outline/40 text-xs px-0.5">/</span>
+<button class="px-2.5 py-1 rounded-full text-label-hud font-label-hud uppercase text-on-surface-variant/70 hover:text-on-surface transition-all" id="lang-hi" onclick="setLanguage('hi')">HI</button>
+</div>
+</header>
+<!-- MAIN CANVASES -->
+<main class="pt-16 px-4 flex flex-col space-y-4">
+<!-- Gym Prestige & Tier Privilege Ribbon -->
+<div class="w-full pt-1 flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-1.5">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim animate-pulse"></span>
+<span class="font-label-hud text-label-hud uppercase text-primary-container tracking-widest font-bold">AI COACH • TIER ELITE</span>
+</div>
+<span class="font-label-hud text-[10px] text-on-surface-variant/60 tracking-wider">v4.8 HUD SYNC</span>
+</div>
+<!-- Equinox / Talwalkars Black Privilege Capsule -->
+<div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-surface-container-lowest/80 border border-outline-variant/30">
+<div class="flex items-center space-x-2 truncate">
+<span class="material-symbols-outlined text-primary-container text-sm" data-icon="workspace_premium">workspace_premium</span>
+<span class="font-label-hud text-[10px] tracking-wider text-primary truncate font-semibold uppercase">EQUINOX / TALWALKARS BLACK ₹10,000/MO PRIVILEGE</span>
+</div>
+<span class="material-symbols-outlined text-outline text-xs" data-icon="verified">verified</span>
+</div>
+</div>
+<!-- MUSCLE GROUP FILTER (Horizontal Chips) -->
+<section class="space-y-1.5">
+<div class="flex justify-between items-center px-1">
+<span class="font-label-hud text-label-hud uppercase text-on-surface-variant/60 tracking-wider">TARGET BIOMECHANICAL REGION</span>
+<span class="font-label-hud text-[10px] text-primary-container tracking-widest">8 MODALITIES</span>
+</div>
+<div class="flex space-x-2 overflow-x-auto no-scrollbar py-1 -mx-4 px-4">
+<button class="shrink-0 px-3.5 py-1.5 rounded-full text-label-hud font-label-hud uppercase tracking-wider bg-surface-container border border-outline-variant/30 text-on-surface-variant active:scale-95 transition-all">All</button>
+<!-- Active: Legs with glowing amber underline & accent -->
+<button class="shrink-0 px-4 py-1.5 rounded-full text-label-hud font-label-hud uppercase tracking-wider bg-[#1E1C12] border border-primary-container text-primary-container font-bold relative hud-glow-amber active:scale-95 transition-all">
+            Legs
+            <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 bg-primary-container rounded-full"></span>
+</button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full text-label-hud font-label-hud uppercase tracking-wider bg-surface-container border border-outline-variant/30 text-on-surface-variant active:scale-95 transition-all">Chest</button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full text-label-hud font-label-hud uppercase tracking-wider bg-surface-container border border-outline-variant/30 text-on-surface-variant active:scale-95 transition-all">Back</button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full text-label-hud font-label-hud uppercase tracking-wider bg-surface-container border border-outline-variant/30 text-on-surface-variant active:scale-95 transition-all">Shoulders</button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full text-label-hud font-label-hud uppercase tracking-wider bg-surface-container border border-outline-variant/30 text-on-surface-variant active:scale-95 transition-all">Arms</button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full text-label-hud font-label-hud uppercase tracking-wider bg-surface-container border border-outline-variant/30 text-on-surface-variant active:scale-95 transition-all">Core</button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full text-label-hud font-label-hud uppercase tracking-wider bg-surface-container border border-outline-variant/30 text-on-surface-variant active:scale-95 transition-all">Glutes</button>
+</div>
+</section>
+<!-- EXERCISE SELECTION (Bento Style with Highlighted Squat Card) -->
+<section class="space-y-2.5">
+<div class="flex justify-between items-end px-1">
+<span class="font-label-hud text-label-hud uppercase text-on-surface-variant/70 tracking-wider">SELECTED PROTOCOL</span>
+<span class="font-label-hud text-[10px] text-secondary-fixed-dim uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="videocam">videocam</span> KINEMATIC POSE AI READY
+          </span>
+</div>
+<!-- HERO ACTIVE EXERCISE CARD: Barbell Back Squat -->
+<div class="relative rounded-xl bg-[#14141A]/90 border border-primary-container p-4 backdrop-blur-xl hud-glow-amber transition-all">
+<div class="flex items-start justify-between">
+<div class="flex-1 pr-3">
+<div class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-primary-container/10 border border-primary-container/40 mb-2">
+<span class="material-symbols-outlined text-primary-container text-xs" data-icon="stay_current_portrait">stay_current_portrait</span>
+<span class="font-label-hud text-[10px] text-primary-container uppercase font-bold tracking-wider">PORTRAIT CAMERA • 2.5M DISTANCE</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary tracking-tight">Barbell Back Squat</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant/80 mt-0.5">Quads • Glutes • Spinal Erectors</p>
+</div>
+<!-- Silhouette Icon Thumbnail from Provided Image -->
+<div class="w-16 h-16 rounded-lg bg-surface-container-lowest border border-primary-container/40 p-1 flex items-center justify-center relative overflow-hidden shrink-0">
+<img alt="Barbell Back Squat Athlete Silhouette" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(255,210,63,0.5)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4_eTjX9E2TBA7WvcwDVFX8tH6Hj9G2ZOTIZBI2Nojq55F-9twhgsI1Tw9iZkCCEeDVmEowbtjJUSS31TOZcvwkN1FE9Nzy8pavFO0CZjhGSoPkc5bPyr-d0w9GxCsQewTcEJPC1_TPzTkEzzpF7WLR1ciHnw8aJxdnwMl-lMce1UNDdvoVUfusDy-1cG2-IZhC0_Q4ImPTOYU2lczFpRkGL68zb_Ujwf7DrAQ3l5vsfznouNGpUO3tw"/>
+</div>
+</div>
+<!-- Dynamic Kinetic Form Arc Telemetry Preview -->
+<div class="mt-3 pt-2.5 border-t border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-label-hud text-[10px] text-secondary tracking-wider font-semibold uppercase">DEPTH CRITERIA: SUB-PARALLEL (95°)</span>
+</div>
+<span class="font-label-hud text-[10px] text-primary-container font-mono">CADENCE 3-0-1</span>
+</div>
+</div>
+<!-- ALTERNATIVE EXERCISES (Compact Obsidian Instruments) -->
+<div class="grid grid-cols-1 gap-2 pt-1">
+<!-- Alt 1: Romanian Deadlift -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-low/70 border border-white/5 hover:border-outline-variant/40 active:scale-[0.99] transition-all">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded bg-surface-container-lowest border border-white/10 flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-base" data-icon="fitness_center">fitness_center</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-[15px] font-semibold text-on-surface leading-tight">Romanian Deadlift</h3>
+<span class="font-body-sm text-[11px] text-on-surface-variant/60">Hamstrings • Posterior Chain</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-label-hud uppercase tracking-wider bg-surface-container-highest/60 text-on-surface-variant/80 border border-white/5">Landscape</span>
+</div>
+<!-- Alt 2: Bulgarian Split Squat -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-low/70 border border-white/5 hover:border-outline-variant/40 active:scale-[0.99] transition-all">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded bg-surface-container-lowest border border-white/10 flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-base" data-icon="directions_walk">directions_walk</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-[15px] font-semibold text-on-surface leading-tight">Bulgarian Split Squat</h3>
+<span class="font-body-sm text-[11px] text-on-surface-variant/60">Unilateral Stability • Quads</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-label-hud uppercase tracking-wider bg-surface-container-highest/60 text-on-surface-variant/80 border border-white/5">Portrait</span>
+</div>
+<!-- Alt 3: Overhead Barbell Press -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-low/70 border border-white/5 hover:border-outline-variant/40 active:scale-[0.99] transition-all">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded bg-surface-container-lowest border border-white/10 flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-base" data-icon="accessibility_new">accessibility_new</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-[15px] font-semibold text-on-surface leading-tight">Overhead Barbell Press</h3>
+<span class="font-body-sm text-[11px] text-on-surface-variant/60">Anterior Delts • Core Brace</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-label-hud uppercase tracking-wider bg-surface-container-highest/60 text-on-surface-variant/80 border border-white/5">Portrait</span>
+</div>
+</div>
+</section>
+<!-- ERGONOMIC REPS & SETS CONFIGURATION (Fatigue-Proof Steppers) -->
+<section class="space-y-2 pt-1">
+<div class="flex items-center justify-between px-1">
+<span class="font-label-hud text-label-hud uppercase text-on-surface-variant/70 tracking-wider">TACTILE RIG CONTROLS</span>
+<span class="font-label-hud text-[10px] text-primary-container tracking-wider">PRE-FATIGUE CALIBRATED</span>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<!-- SETS COUNTER -->
+<div class="bg-[#121217] rounded-xl p-3 border border-white/10 flex flex-col items-center justify-between shadow-lg">
+<span class="font-label-hud text-label-hud uppercase tracking-wider text-on-surface-variant/70 text-center">TARGET SETS</span>
+<div class="my-2">
+<span class="font-telemetry-metric-mobile text-telemetry-metric-mobile text-primary font-bold tracking-tight" id="sets-display">4</span>
+</div>
+<!-- Stepper Touch Envelopes (Min 54px) -->
+<div class="flex items-center space-x-3 w-full justify-center">
+<button class="w-14 h-14 rounded-full bg-surface-container-high border border-white/15 flex items-center justify-center text-primary-container hover:bg-surface-container-highest active:scale-90 transition-transform" onclick="adjustCounter('sets', -1)">
+<span class="material-symbols-outlined text-2xl" data-icon="remove">remove</span>
+</button>
+<button class="w-14 h-14 rounded-full bg-surface-container-high border border-white/15 flex items-center justify-center text-primary-container hover:bg-surface-container-highest active:scale-90 transition-transform" onclick="adjustCounter('sets', 1)">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+</div>
+</div>
+<!-- REPS COUNTER -->
+<div class="bg-[#121217] rounded-xl p-3 border border-white/10 flex flex-col items-center justify-between shadow-lg">
+<span class="font-label-hud text-label-hud uppercase tracking-wider text-on-surface-variant/70 text-center">TARGET REPS / SET</span>
+<div class="my-2">
+<span class="font-telemetry-metric-mobile text-telemetry-metric-mobile text-primary font-bold tracking-tight" id="reps-display">8</span>
+</div>
+<!-- Stepper Touch Envelopes (Min 54px) -->
+<div class="flex items-center space-x-3 w-full justify-center">
+<button class="w-14 h-14 rounded-full bg-surface-container-high border border-white/15 flex items-center justify-center text-primary-container hover:bg-surface-container-highest active:scale-90 transition-transform" onclick="adjustCounter('reps', -1)">
+<span class="material-symbols-outlined text-2xl" data-icon="remove">remove</span>
+</button>
+<button class="w-14 h-14 rounded-full bg-surface-container-high border border-white/15 flex items-center justify-center text-primary-container hover:bg-surface-container-highest active:scale-90 transition-transform" onclick="adjustCounter('reps', 1)">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Target RPE / Load Pill Strip -->
+<div class="w-full py-2 px-3.5 rounded-lg bg-surface-container-lowest border border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary-container text-sm" data-icon="speed">speed</span>
+<span class="font-label-hud text-label-hud uppercase tracking-wider text-on-surface-variant/90 font-semibold">LOAD FORMULA</span>
+</div>
+<span class="font-label-hud text-[11px] text-primary-container font-mono font-bold tracking-wider">TARGET: 85% 1RM • RPE 8.5</span>
+</div>
+</section>
+</main>
+<!-- FIXED BOTTOM PRIMARY ACTION & COACHING HINT -->
+<div class="fixed bottom-16 left-0 w-full max-w-[390px] z-40 px-4 pt-2 pb-3 bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/95 to-transparent backdrop-blur-md mx-auto right-0">
+<!-- Primary HUD Kinetic Action Button (56px) -->
+<button class="w-full h-14 rounded-lg bg-primary-container text-surface-container-lowest font-label-button text-label-button uppercase font-bold tracking-wider flex items-center justify-center space-x-2 hud-glow-amber-strong active:scale-[0.98] transition-transform duration-75">
+<span>START CAMERA SESSION</span>
+<span class="material-symbols-outlined text-xl" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<!-- Framing Guidance Hint directly below CTA -->
+<p class="font-body-sm text-[11px] text-on-surface-variant/80 text-center mt-2 leading-tight flex items-center justify-center space-x-1">
+<span class="material-symbols-outlined text-primary-container text-sm shrink-0" data-icon="bolt">bolt</span>
+<span>Set phone upright at waist height, angled 45° to track full knee &amp; hip displacement.</span>
+</p>
+</div>
+<!-- BOTTOM NAVIGATION BAR (Shared Component JSON) -->
+<!-- Active: Workout (Index 0) as this is the workout rig setup screen -->
+<nav class="fixed bottom-0 left-0 w-full max-w-[390px] z-50 flex justify-around items-center px-4 h-16 bg-surface-container-low/95 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-4px_20px_rgba(0,0,0,0.4)] mx-auto right-0">
+<!-- Destination 1: Workout (ACTIVE) -->
+<button class="flex flex-col items-center justify-center text-primary-container font-semibold py-1 active:scale-95 transition-transform duration-75">
+<span class="material-symbols-outlined text-2xl" data-icon="fitness_center" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="text-label-hud font-label-hud uppercase tracking-wider mt-0.5">Workout</span>
+</button>
+<!-- Destination 2: Telemetry -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 py-1 hover:text-on-surface transition-colors active:scale-95 transition-transform duration-75">
+<span class="material-symbols-outlined text-2xl" data-icon="monitoring">monitoring</span>
+<span class="text-label-hud font-label-hud uppercase tracking-wider mt-0.5">Telemetry</span>
+</button>
+<!-- Destination 3: History -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 py-1 hover:text-on-surface transition-colors active:scale-95 transition-transform duration-75">
+<span class="material-symbols-outlined text-2xl" data-icon="history">history</span>
+<span class="text-label-hud font-label-hud uppercase tracking-wider mt-0.5">History</span>
+</button>
+<!-- Destination 4: Profile -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 py-1 hover:text-on-surface transition-colors active:scale-95 transition-transform duration-75">
+<span class="material-symbols-outlined text-2xl" data-icon="person">person</span>
+<span class="text-label-hud font-label-hud uppercase tracking-wider mt-0.5">Profile</span>
+</button>
+</nav>
+</div>
+<!-- Micro Interaction Script for Sweaty Gym Adjusters -->
+<script>
+    let state = {
+      sets: 4,
+      reps: 8,
+      lang: 'en'
+    };
+
+    function adjustCounter(type, delta) {
+      if (type === 'sets') {
+        state.sets = Math.max(1, Math.min(10, state.sets + delta));
+        document.getElementById('sets-display').innerText = state.sets;
+      } else if (type === 'reps') {
+        state.reps = Math.max(1, Math.min(30, state.reps + delta));
+        document.getElementById('reps-display').innerText = state.reps;
+      }
+    }
+
+    function setLanguage(lang) {
+      state.lang = lang;
+      const btnEn = document.getElementById('lang-en');
+      const btnHi = document.getElementById('lang-hi');
+
+      if (lang === 'en') {
+        btnEn.className = "px-2.5 py-1 rounded-full text-label-hud font-label-hud uppercase bg-primary-container text-on-primary-container font-semibold transition-all";
+        btnHi.className = "px-2.5 py-1 rounded-full text-label-hud font-label-hud uppercase text-on-surface-variant/70 hover:text-on-surface transition-all";
+      } else {
+        btnHi.className = "px-2.5 py-1 rounded-full text-label-hud font-label-hud uppercase bg-primary-container text-on-primary-container font-semibold transition-all";
+        btnEn.className = "px-2.5 py-1 rounded-full text-label-hud font-label-hud uppercase text-on-surface-variant/70 hover:text-on-surface transition-all";
+      }
+    }
+  </script>
+</body></html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ignite AI Coach - Set Complete &amp; Rest Protocol</title>
+<!-- Google Fonts: Space Grotesk & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Container Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface": "#131317",
+            "error-container": "#93000a",
+            "primary-container": "#ffd23f",
+            "on-error": "#690005",
+            "on-primary": "#3d2f00",
+            "surface-tint": "#edc22e",
+            "secondary-container": "#05e777",
+            "tertiary": "#fff0ee",
+            "on-primary-container": "#725a00",
+            "primary-fixed-dim": "#edc22e",
+            "secondary-fixed": "#62ff96",
+            "primary-fixed": "#ffe089",
+            "error": "#ffb4ab",
+            "on-surface": "#e4e1e7",
+            "inverse-surface": "#e4e1e7",
+            "on-secondary-container": "#00622e",
+            "surface-dim": "#131317",
+            "inverse-on-surface": "#303034",
+            "on-background": "#e4e1e7",
+            "surface-variant": "#353439",
+            "inverse-primary": "#745c00",
+            "on-tertiary-fixed-variant": "#930005",
+            "on-primary-fixed": "#241a00",
+            "outline-variant": "#4d4634",
+            "tertiary-fixed-dim": "#ffb4aa",
+            "on-primary-fixed-variant": "#574500",
+            "outline": "#9a907a",
+            "surface-bright": "#39393d",
+            "surface-container-low": "#1b1b1f",
+            "surface-container-highest": "#353439",
+            "on-secondary-fixed": "#00210b",
+            "primary": "#fff2d7",
+            "background": "#131317",
+            "surface-container-high": "#2a292e",
+            "on-tertiary": "#690003",
+            "surface-container-lowest": "#0e0e12",
+            "surface-container": "#1f1f23",
+            "on-tertiary-container": "#be000a",
+            "on-surface-variant": "#d1c5ad",
+            "secondary-fixed-dim": "#00e475",
+            "on-secondary": "#003918",
+            "on-secondary-fixed-variant": "#005226",
+            "tertiary-fixed": "#ffdad5",
+            "secondary": "#7dffa2",
+            "on-tertiary-fixed": "#410001",
+            "on-error-container": "#ffdad6",
+            "tertiary-container": "#ffcbc4"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-desktop": "3rem",
+            "space-xs": "0.25rem",
+            "gutter-desktop": "2rem",
+            "margin": "1rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2.5rem",
+            "gutter": "1.25rem"
+          },
+          "fontFamily": {
+            "label-button": ["Space Grotesk"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "label-hud": ["Space Grotesk"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "display-hud": ["Space Grotesk"],
+            "display-hud-mobile": ["Space Grotesk"],
+            "telemetry-metric": ["Space Grotesk"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "telemetry-metric-mobile": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "label-button": ["15px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-hud": ["11px", { "lineHeight": "14px", "letterSpacing": "0.12em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "display-hud": ["84px", { "lineHeight": "88px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+            "display-hud-mobile": ["56px", { "lineHeight": "60px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "telemetry-metric": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "body-md": ["15px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "telemetry-metric-mobile": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .glass-obsidian {
+      background: rgba(18, 18, 22, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+    .hud-border {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .hud-border-amber {
+      border: 1px solid rgba(255, 210, 63, 0.35);
+    }
+    .glow-amber-btn {
+      box-shadow: 0 0 24px rgba(255, 210, 63, 0.35);
+    }
+    .glow-emerald-sm {
+      box-shadow: 0 0 14px rgba(5, 231, 119, 0.25);
+    }
+    .pulse-ring {
+      animation: pulse-op 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-op {
+      0%, 100% { opacity: 0.9; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.02); }
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface antialiased font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Shell (Shared Component Blueprint) -->
+<header class="fixed top-0 left-0 w-full z-40 flex justify-between items-center px-gutter h-14 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="bolt">bolt</span>
+<span class="text-headline-sm font-headline-sm font-bold tracking-widest text-primary-container">IGNITE AI</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-container-high hud-border">
+<span class="w-2 h-2 rounded-full bg-secondary-container animate-ping"></span>
+<span class="text-label-hud font-label-hud text-secondary-container">LIVE HUD</span>
+</div>
+<button class="text-label-button font-label-button uppercase text-primary-container hover:text-primary transition-colors active:scale-95 duration-100">
+        EN / HI
+      </button>
+</div>
+</header>
+<!-- Ambient Underlay / Gym Camera Feed Backdrop -->
+<div class="fixed inset-0 z-0">
+<img alt="Athlete performing Barbell Back Squat in high performance strength facility" class="w-full h-full object-cover object-center opacity-30 filter grayscale contrast-125" src="https://lh3.googleusercontent.com/aida/AEtjO1XJ-BH6tWNBV_0J8cI6-EL9SbwPqvpISZFCVg991lh5yWLMtUVbKM36ipjsgfpsOdy-YhPQ6QFEQS8JobL9VCxEOdmKKIhFlYR4N6DuPG48GuKr9tX1Xvo2D0c2fUJ8NYszW6mWfxwc-uf9MZij-etjVqR71HHML9eKk4VnKXR9_oXnbr-f_h_UAr3zIJDnXBCpxgpABXQWWri771RDlc2QQI3EKXjDVrG4m1waAc3xHbMQ21nLax10-tc_"/>
+<!-- Deep Obsidian High-Tech Vignette Layer -->
+<div class="absolute inset-0 bg-gradient-to-b from-[#0a0a0c]/90 via-[#0e0e12]/85 to-[#0a0a0c] backdrop-blur-xl"></div>
+<!-- Telemetric Crosshair Grid Lines -->
+<div class="absolute inset-0 pointer-events-none opacity-20 bg-[linear-gradient(to_right,#ffffff15_1px,transparent_1px),linear-gradient(to_bottom,#ffffff15_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
+</div>
+<!-- Primary Canvas Container -->
+<main class="relative z-10 pt-16 pb-28 px-4 max-w-md mx-auto min-h-screen flex flex-col justify-start">
+<!-- Top Telemetric Status Pill & Exercise Indicator -->
+<div class="mt-3 mb-4 flex flex-col items-center justify-center text-center"><div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high/80 hud-border"><span class="material-symbols-outlined text-secondary-container text-sm" data-icon="check_circle">check_circle</span><span class="text-label-hud font-label-hud tracking-widest text-on-surface uppercase">BARBELL BACK SQUAT</span><span class="text-outline">•</span><span class="text-label-hud font-label-hud text-primary-container font-semibold uppercase">SET 3 COMPLETE</span></div><div class="text-body-sm font-body-sm text-outline mt-1.5">8 Reps @ 100 kg logged • Rest &amp; Recover</div></div>
+<!-- PRIMARY REST COUNTDOWN COCKPIT (Legible from 2 meters away) -->
+<section class="glass-obsidian rounded-2xl p-6 hud-border-amber shadow-2xl relative overflow-hidden mb-4 flex flex-col items-center justify-center"><div class="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-primary-container/10 filter blur-3xl pointer-events-none"></div><div class="w-full flex items-center justify-between mb-4"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container text-base" data-icon="timelapse">timelapse</span><span class="text-label-hud font-label-hud uppercase tracking-widest text-primary-container font-semibold">REST PROTOCOL</span></div><span class="text-label-hud font-label-hud text-secondary-container px-2 py-0.5 rounded bg-secondary-container/15 border border-secondary-container/30">RECOVERY OPTIMAL</span></div><div class="relative w-56 h-56 flex items-center justify-center my-2"><svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100"><circle cx="50" cy="50" fill="none" r="44" stroke="rgba(255, 255, 255, 0.08)" stroke-width="4.5"></circle><circle class="filter drop-shadow-[0_0_8px_rgba(255,210,63,0.4)]" cx="50" cy="50" fill="none" r="44" stroke="#FFD23F" stroke-dasharray="276.46" stroke-dashoffset="65" stroke-linecap="round" stroke-width="5"></circle></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="font-display-hud-mobile text-display-hud-mobile font-bold tracking-tight text-primary leading-none" id="countdownDisplay">01:42</span><span class="text-label-hud font-label-hud text-on-surface-variant uppercase mt-1.5 tracking-wider">RECOVERY ACTIVE</span></div></div><div class="flex items-center justify-center gap-3 mt-3 w-full max-w-xs"><button aria-label="Subtract 10 seconds of rest" class="h-[52px] px-5 flex-1 rounded-xl bg-surface-container-high/90 hud-border active:scale-95 duration-75 flex items-center justify-center gap-2 text-primary hover:border-primary-container transition-colors" id="subRestBtn"><span class="material-symbols-outlined text-primary-container text-xl" data-icon="replay_10">replay_10</span><span class="text-label-button font-label-button text-primary">-10S</span></button><button aria-label="Add 10 seconds of rest" class="h-[52px] px-5 flex-1 rounded-xl bg-surface-container-high/90 hud-border active:scale-95 duration-75 flex items-center justify-center gap-2 text-primary hover:border-primary-container transition-colors" id="addRestBtn"><span class="material-symbols-outlined text-primary-container text-xl" data-icon="forward_10">forward_10</span><span class="text-label-button font-label-button text-primary">+10S</span></button></div><div class="mt-5 w-full"><button class="w-full h-14 rounded-xl bg-primary-container text-surface-container-lowest font-label-button text-label-button uppercase font-bold flex items-center justify-center gap-2 tracking-wider glow-amber-btn active:scale-98 transition-transform duration-75"><span>SKIP REST &amp; START SET 4</span><span class="material-symbols-outlined text-2xl font-bold" data-icon="arrow_forward">arrow_forward</span></button></div></section>
+<!-- Post-Set Tactical Overdrive & Drop Set Protocols -->
+<div class="glass-obsidian rounded-xl px-4 py-3 hud-border flex items-center justify-between shadow-sm mb-4"><div class="flex items-center gap-2.5"><span class="material-symbols-outlined text-primary-container text-lg" data-icon="fitness_center">fitness_center</span><div><div class="text-label-hud font-label-hud uppercase tracking-wider text-outline">UP NEXT</div><div class="text-label-button font-label-button text-primary font-semibold">SET 4 OF 4 • 100.0 KG</div></div></div><button class="px-3 py-1.5 rounded-lg bg-surface-container-high hud-border hover:border-primary-container text-label-hud font-label-hud text-primary-container flex items-center gap-1 active:scale-95 transition-all"><span class="material-symbols-outlined text-sm" data-icon="add">add</span><span>2.5 KG</span></button></div>
+<!-- Rest Telemetry Array: Heart Rate & AI Coach Vocal Prompt -->
+</main>
+<!-- Bottom Navigation Shell (Shared Component Execution Blueprint) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 h-16 bg-surface-container-low/95 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-4px_20px_rgba(0,0,0,0.4)]">
+<!-- Tab 1: Workout (ACTIVE: set tracking context) -->
+<a class="flex flex-col items-center justify-center text-primary-container font-semibold py-1 active:scale-95 transition-transform duration-75" href="#workout">
+<span class="material-symbols-outlined text-2xl" data-icon="fitness_center" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="text-label-hud font-label-hud uppercase tracking-wider mt-0.5">Workout</span>
+</a>
+<!-- Tab 2: Telemetry -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 py-1 hover:text-on-surface transition-colors active:scale-95 duration-75" href="#telemetry">
+<span class="material-symbols-outlined text-2xl" data-icon="monitoring">monitoring</span>
+<span class="text-label-hud font-label-hud uppercase tracking-wider mt-0.5">Telemetry</span>
+</a>
+<!-- Tab 3: History -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 py-1 hover:text-on-surface transition-colors active:scale-95 duration-75" href="#history">
+<span class="material-symbols-outlined text-2xl" data-icon="history">history</span>
+<span class="text-label-hud font-label-hud uppercase tracking-wider mt-0.5">History</span>
+</a>
+<!-- Tab 4: Profile -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 py-1 hover:text-on-surface transition-colors active:scale-95 duration-75" href="#profile">
+<span class="material-symbols-outlined text-2xl" data-icon="person">person</span>
+<span class="text-label-hud font-label-hud uppercase tracking-wider mt-0.5">Profile</span>
+</a>
+</nav>
+<!-- Micro-Interactions Script for Stepper & Rest Timer -->
+<script>
+    let remainingSeconds = 105; // 01:45
+    const countdownEl = document.getElementById('countdownDisplay');
+    const subBtn = document.getElementById('subRestBtn');
+    const addBtn = document.getElementById('addRestBtn');
+
+    function updateDisplay() {
+      const mins = Math.floor(remainingSeconds / 60);
+      const secs = remainingSeconds % 60;
+      countdownEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    if (subBtn && addBtn && countdownEl) {
+      subBtn.addEventListener('click', () => {
+        remainingSeconds = Math.max(0, remainingSeconds - 10);
+        updateDisplay();
+      });
+
+      addBtn.addEventListener('click', () => {
+        remainingSeconds += 10;
+        updateDisplay();
+      });
+
+      // Subtle simulated countdown ticks
+      setInterval(() => {
+        if (remainingSeconds > 0) {
+          remainingSeconds--;
+          updateDisplay();
+        }
+      }, 1000);
+    }
+  </script>
+</body></html>

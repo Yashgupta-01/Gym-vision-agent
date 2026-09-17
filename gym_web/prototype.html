@@ -329,6 +329,7 @@
       <select id="langSelect"></select>
       <button class="btn" id="micBtn" title="Hold to ask coach">🎤</button>
       <button class="btn" id="flipBtn">⟲ Flip</button>
+      <button class="btn" id="hideSkeletonBtn" title="Hide pose overlay">👁️</button>
     </div>
     <div id="coachPanel"></div>
     <video id="video" playsinline autoplay muted></video>
@@ -417,6 +418,15 @@
 
     const targetRepsInput = document.getElementById("targetRepsInput");
     const targetSetsInput = document.getElementById("targetSetsInput");
+
+    const hideSkeletonBtn = document.getElementById("hideSkeletonBtn");
+    let showSkeleton = true;
+
+    hideSkeletonBtn.addEventListener("click", () => {
+      showSkeleton = !showSkeleton;
+      hideSkeletonBtn.textContent = showSkeleton ? "👁️" : "🙈";
+      hideSkeletonBtn.title = showSkeleton ? "Hide pose overlay" : "Show pose overlay";
+    });
 
     let TARGET_REPS = 10;
     let TARGET_SETS = 3;
@@ -574,7 +584,7 @@
           const v = pickVoice();
           if (v) u.voice = v;
           u.rate = 1.05;
-          u.onstart = () => { this.currentSource = source; };
+          this.currentSource = source; 
           u.onend = () => { if (this.currentSource === source) this.currentSource = null; };
           window.speechSynthesis.speak(u);
           this.lastMsg = localized;

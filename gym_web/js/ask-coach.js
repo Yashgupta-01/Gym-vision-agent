@@ -127,7 +127,16 @@ async function transcribeBlob(blob) {
 async function startRecording() {
   try {
     // Only request audio — do NOT request video, we already have the camera stream
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    const stream = await navigator.mediaDevices.getUserMedia(
+      {
+        audio: {channelCount: 1,
+        sampleRate: 16000,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+        video: false 
+      });
 
     // Pick the best supported MIME type for the phone
     const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
@@ -136,7 +145,7 @@ async function startRecording() {
         ? "audio/webm"
         : "audio/ogg";
 
-    mediaRecorder = new MediaRecorder(stream, { mimeType });
+    mediaRecorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond:128000 });
     audioChunks   = [];
     mediaRecorder.ondataavailable = (e) => {
       if (e.data && e.data.size > 0) audioChunks.push(e.data);

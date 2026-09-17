@@ -164,7 +164,7 @@ def ask_coach(req: AskRequest):
             model=MODEL_NAME,
             config=genai_types.GenerateContentConfig(
                 system_instruction=build_system_prompt(req.language),
-                max_output_tokens=300,
+                max_output_tokens=350,
                 temperature=0.4,
             )
         )
@@ -230,17 +230,19 @@ async def transcribe(
         # Bias Whisper toward Hindi Devanagari (not Urdu Arabic script)
         # and reduce English hallucinations on short gym clips.
         kwargs = {
-            "language": lang,
-            "task": "transcribe",
-            "fp16": False,
-            "condition_on_previous_text": False,
-            "temperature": 0.0,
+        "language": lang,
+        "task": "transcribe",
+        "fp16": False,
+        "condition_on_previous_text": False,
+        "temperature": 0.0,
+        "beam_size": 5,
+        "best_of": 5,
         }
         if lang == "hi":
             kwargs["initial_prompt"] = (
-                "यह एक जिम में हिंदी बातचीत है। "
-                "प्रोटेइन, पानी, रेप्स, सेट, व्यायाम।"
-            )
+            "यह एक जिम में हिंदी बातचीत है। "
+            "प्रोटेइन, पानी, रेप्स, सेट, व्यायाम।"
+        )
 
         result = model.transcribe(tmp_path, **kwargs)
         text = (result.get("text") or "").strip()
